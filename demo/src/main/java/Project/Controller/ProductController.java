@@ -1,0 +1,130 @@
+package Project.Controller;
+
+import java.util.List;
+
+import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import Project.Helper.ApiResponse;
+import Project.Helper.PageResponse;
+import Project.Model.Entity.Role;
+import Project.Model.DTO.Request.ProductRequestDTO;
+import Project.Model.DTO.Response.ProductResponseDTO;
+import Project.Model.DTO.Response.RoleResponseDTO;
+import Project.Model.DTO.ProductWebSocketEvent;
+import Project.Service.ProductService;
+import Project.Service.RoleService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+
+@RestController
+@RequiredArgsConstructor
+public class ProductController {
+    private final ProductService productService;
+    private final SimpMessagingTemplate messagingTemplate;
+
+    @PostMapping("/products")
+    public ResponseEntity<ApiResponse<ProductResponseDTO>> postProduct(@Valid @RequestBody ProductRequestDTO productRequestDTO) {
+        ProductResponseDTO productResponseDTO = this.productService.createProduct(productRequestDTO);
+        
+        ProductWebSocketEvent event =
+            new ProductWebSocketEvent(
+                    "CREATE",
+                    productResponseDTO
+            );
+        
+        messagingTemplate.convertAndSend(
+                "/topic/products",
+                event
+        );
+        
+        return ApiResponse.created(productResponseDTO);
+    }
+
+    @GetMapping("/products")
+    public ResponseEntity<ApiResponse<PageResponse<ProductResponseDTO>>> getProducts(
+            @RequestParam(required = false) String brand,
+            @RequestParam(required = false) String category,
+            Pageable pageable) {
+
+        Page<ProductResponseDTO> productResponseDTOs;
+
+        if (brand != null && category != null) {
+            productResponseDTOs =
+                    this.productService.fetchProductWithBrandAndCategory(brand, category, pageable);
+
+        } else if (brand != null) {
+            productResponseDTOs =
+                    this.productService.fetchProductWithBrand(brand, pageable);
+
+        } else if (category != null) {
+            productResponseDTOs =
+                    this.productService.fetchProductWithCategory(category, pageable);
+
+        } else {
+            productResponseDTOs =
+                    this.productService.fetchProducts(pageable);
+        }
+
+        return ApiResponse.success(PageResponse.from(productResponseDTOs));
+    }
+
+
+    @GetMapping("/products/{id}")
+    public ResponseEntity<ApiResponse<ProductResponseDTO>> getProduct(@PathVariable int id) {
+        ProductResponseDTO productResponseDTO = this.productService.fetchProductById(id);
+        return ApiResponse.success(productResponseDTO);
+    }
+
+    @GetMapping("/products/name")
+    public ResponseEntity<ApiResponse<List<ProductResponseDTO>>> getProduct(@RequestParam("name") String product_name) {
+        List<ProductResponseDTO> productResponseDTOs = this.productService.fetchProductByName(product_name);
+        return ApiResponse.success(productResponseDTOs);
+    }
+
+    @PutMapping("/products/{id}")
+    public ResponseEntity<ApiResponse<ProductResponseDTO>> updateProduct(@PathVariable int id, 
+        @Valid @RequestBody ProductRequestDTO updateProductRequestDTO) {
+        ProductResponseDTO productResponseDTO = this.productService.updateProductById(id, updateProductRequestDTO);
+        ProductWebSocketEvent event =
+            new ProductWebSocketEvent(
+                    "UPDATE",
+                    productResponseDTO
+            );
+
+        messagingTemplate.convertAndSend(
+                "/topic/products",
+                event
+        );
+        return ApiResponse.success(productResponseDTO);
+    }
+
+    @DeleteMapping("/products/{id}")
+    public ResponseEntity<ApiResponse<String>> deleteProduct(@PathVariable int id) {
+        this.productService.deleteProductById(id);
+        ProductWebSocketEvent event =
+            new ProductWebSocketEvent(
+                    "DELETE",
+                    id
+            );
+
+        messagingTemplate.convertAndSend(
+                "/topic/products",
+                event
+        );
+        return ApiResponse.success("delete successful");
+    }
+}

@@ -1,0 +1,43 @@
+# === Build & Target Outputs ===
+target/
+bin/
+
+# === Maven ===
+.mvn/wrapper/maven-wrapper.jar
+
+# === IDE Configurations ===
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Eclipse / STS / VS Code Java Extension
+.classpath
+.project
+.settings/
+.factorypath
+.apt_generated/
+.springBeans
+.sts4-cache
+
+# VS Code
+.vscode/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# === Environment & Secrets ===
+.env
+.env.*
+application-local.properties
+application-secret.properties
+
+# === Logs & System Files ===
+*.log
+.DS_Store
+Thumbs.db
