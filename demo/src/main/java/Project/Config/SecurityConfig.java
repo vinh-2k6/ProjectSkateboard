@@ -61,19 +61,19 @@ public class SecurityConfig {
 
     @Bean 
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // http.authorizeHttpRequests(request -> request
-        //                             .requestMatchers("/auth/login", "/auth/register", 
-        //                             "/products", "/products/{id}", "/ws/**" 
-        //                             ).permitAll()
-        //                             .anyRequest().authenticated()
-        // );
-
-        http.authorizeHttpRequests(request -> request.anyRequest().permitAll()
+        http.authorizeHttpRequests(request -> request
+                                    .requestMatchers("/auth/login", "/auth/register", 
+                                    "/products", "/products/{id}", "/ws/**", "/orders/**"
+                                    ).permitAll()
+                                    .anyRequest().authenticated()
         );
+
+        // http.authorizeHttpRequests(request -> request.anyRequest().permitAll()
+        // );
 
         http.oauth2ResourceServer(oath2 -> oath2
                             .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
-        //http.csrf(c -> c.disable());
+        http.csrf(c -> c.disable());
         http.cors(cors -> {});
         http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         return http.build();
@@ -104,11 +104,12 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of("http://localhost:5000","http://localhost:5173"));
         configuration.setAllowedMethods(List.of(
             "GET",
             "POST",
             "PUT",
+            "PATCH",
             "DELETE",
             "OPTIONS"
         ));

@@ -1,0 +1,7 @@
+FROM maven:3.9-eclipse-temurin-25
+
+WORKDIR /app
+
+EXPOSE 8091
+
+CMD ["sh", "-c", "chmod +x mvnw && ./mvnw spring-boot:run"]

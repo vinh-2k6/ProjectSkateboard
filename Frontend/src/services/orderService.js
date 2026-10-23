@@ -26,18 +26,16 @@ export const orderService = {
         status: 'CANCELLED'
       }
     });
-
-    return response.data;
+    return response.data?.data || response.data;
   },
 
-  // PATCH /orders/{id}?status=SHIPPED
+  // PATCH /orders/{id}?status=...
   updateOrderStatus: async (id, status) => {
     const response = await api.patch(`/orders/${id}`, null, {
       params: {
-        status
+        status: status
       }
     });
-
-    return response.data;
+    return response.data?.data || response.data;
   }
 };
