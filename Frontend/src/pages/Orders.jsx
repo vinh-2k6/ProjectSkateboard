@@ -43,28 +43,28 @@ export default function Orders() {
               console.log("Subscribe user:", userId);
 
               // 4. Subscribe topic riêng của user
-              client.subscribe(
-                  `/topic/orders/user/${userId}`,
-                  (message) => {
+              
+            client.subscribe(
+                `/topic/orders/user/${userId}`,
+                (message) => {
+                    const event = JSON.parse(message.body);
 
-                      const updatedOrder =
-                          JSON.parse(message.body);
+                    console.log("Order event:", event);
 
-                      console.log(
-                          "Order updated:",
-                          updatedOrder
-                      );
+                    // Lấy đơn hàng từ trường data của event
+                    const updatedOrder = event.data;
 
-                      // 5. Cập nhật Order trong state
-                      setOrders(prevOrders =>
-                          prevOrders.map(order =>
-                              order.id === updatedOrder.id
-                                  ? updatedOrder
-                                  : order
-                          )
-                      );
-                  }
-              );
+                    if (event.type === "UPDATE" && updatedOrder) {
+                        setOrders(prevOrders =>
+                            prevOrders.map(order =>
+                                order.id === updatedOrder.id
+                                    ? updatedOrder
+                                    : order
+                            )
+                        );
+                    }
+                }
+            );
           },
 
           onStompError: (frame) => {

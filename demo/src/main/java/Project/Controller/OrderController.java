@@ -65,9 +65,11 @@ public class OrderController {
 
         int userId = this.orderService.getUserIdByOrderId(id);
 
+        OrderWebSocketEvent event = new OrderWebSocketEvent("UPDATE", order);
+
         messagingTemplate.convertAndSend(
                 "/topic/orders/user/" + userId,
-                order
+                event
         );
 
         return ApiResponse.success(order);
