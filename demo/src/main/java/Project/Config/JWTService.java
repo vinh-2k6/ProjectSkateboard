@@ -84,7 +84,7 @@ public class JWTService {
 
     public String createRefreshToken(User user) {
         Instant now = Instant.now();
-        Instant validity = now.plus(Long.valueOf(accessTokenExpiration), ChronoUnit.SECONDS);
+        Instant validity = now.plus(Long.valueOf(refreshTokenExpiration), ChronoUnit.SECONDS);
         String token = this.generateSecureToken();
 
         RefreshToken rf = new RefreshToken();

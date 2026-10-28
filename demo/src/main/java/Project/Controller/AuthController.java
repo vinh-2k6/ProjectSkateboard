@@ -23,9 +23,11 @@ import Project.Helper.ApiResponse;
 import Project.Model.Entity.RefreshToken;
 import Project.Model.Entity.User;
 import Project.Model.DTO.Response.ExchangeTokenResponse;
+import Project.Model.DTO.Request.GoogleLoginRequestDTO;
 import Project.Model.DTO.Request.LoginRequestDTO;
 import Project.Model.DTO.Response.LoginResponseDTO;
 import Project.Model.DTO.Response.LoginResponseDTO.UserLogin;
+import Project.Service.GoogleAuthService;
 import Project.Service.RefreshTokenService;
 import Project.Service.UserService;
 import jakarta.validation.Valid;
@@ -38,6 +40,7 @@ public class AuthController {
 	private final JWTService jwtService;
     private final RefreshTokenService refreshTokenService;
 	private final AuthenticationManager authenticationManager;
+	private final GoogleAuthService googleAuthService;
 
     @Value("${project.jwt.refresh-token-validity-in-seconds}")
 	private int refreshTokenExpiration;
@@ -130,5 +133,34 @@ public class AuthController {
 		ApiResponse<String> finalData = new ApiResponse<>(HttpStatus.OK, "", "ok", "");
 
 		return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, deleteSpringCookie.toString()).body(finalData);
+	}
+
+	@PostMapping("/auth/google")
+	public ResponseEntity<ApiResponse<LoginResponseDTO>> postGoogleLogin(
+			@Valid @RequestBody GoogleLoginRequestDTO request) {
+
+		LoginResponseDTO response = googleAuthService.login(
+				request.getCredential()
+		);
+
+		ResponseCookie refreshCookie = ResponseCookie
+				.from("refreshToken", response.getRefreshToken())
+				.httpOnly(true)
+				.secure(true)
+				.path("/")
+				.sameSite("Lax")
+				.maxAge(refreshTokenExpiration)
+				.build();
+
+		ApiResponse<LoginResponseDTO> result = new ApiResponse<>(
+				HttpStatus.OK,
+				"",
+				response,
+				""
+		);
+
+		return ResponseEntity.ok()
+				.header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+				.body(result);
 	}
 }

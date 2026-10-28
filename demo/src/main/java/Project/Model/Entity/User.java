@@ -14,6 +14,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.persistence.Column;  
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -37,14 +38,17 @@ public class User {
     @NotBlank(message = "email không được để trống")
     private String email;
     
-    @NotBlank(message = "password không được để trống")
+    @Column(nullable = true)
     private String password;
 
-    @NotBlank(message = "phone không được để trống")
+    @Column(nullable = true)
     private String phone;
 
-    @NotBlank(message = "address không được để trống")
+    @Column(nullable = true)
     private String address;
+
+    @Column(name = "google_id", unique = true)
+    private String googleId;
 
     @ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "role_id")

@@ -99,9 +99,7 @@ public class OrderService {
         System.out.println("AUTH NAME = [" + auth.getName() + "]");
         System.out.println("PRINCIPAL = [" + auth.getPrincipal() + "]");
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Khong tim thay user"));
+        User user = userRepository.findByEmail(email);
 
         order.setUser(user);
         return convertOrderToDTO(

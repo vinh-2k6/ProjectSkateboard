@@ -75,3 +75,5 @@ demo/META-INF/
 *.sql
 *.sqlite
 *.sqlite3
+
+mysql-reset.sql

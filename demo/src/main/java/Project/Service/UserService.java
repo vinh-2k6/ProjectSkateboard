@@ -6,8 +6,10 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import Project.Exception.ResourceAlreadyExistsException;
 import Project.Exception.ResourceNotFoundException;
@@ -108,7 +110,51 @@ public class UserService {
 	}
 
 	public User findUserByEmail(String email) {
-		return this.userRepository.findByEmail(email)
-				.orElseThrow(() -> new ResourceNotFoundException("Email not found from service"));
+		return this.userRepository.findByEmail(email);
+	}
+
+	public User findOrCreateGoogleUser(String googleId, String email, String name) {
+		User googleUser = this.userRepository.findByGoogleId(googleId);
+
+		if(googleUser != null) return googleUser;
+		
+		User existingUser = this.userRepository.findByEmail(email);
+
+		if(existingUser != null) {
+			if (existingUser.getGoogleId() != null) {
+				throw new ResponseStatusException(
+						HttpStatus.CONFLICT,
+						"Tài khoản đã được liên kết với Google khác."
+				);
+			}
+
+			existingUser.setGoogleId(googleId);
+			this.userRepository.save(existingUser);
+		}
+		User user = new User();
+		user.setGoogleId(googleId);
+		user.setEmail(email);
+		user.setName(
+				name == null || name.isBlank()
+						? email.substring(0, email.indexOf("@"))
+						: name
+		);
+
+		// Các trường này phải cho phép NULL trong entity/database.
+		user.setPassword(null);
+		user.setPhone(null);
+		user.setAddress(null);
+
+		Role role = roleRepository.findByName("USER")
+				.orElseThrow(() -> new ResourceNotFoundException("Khong tim thay Role"));
+
+		user.setRole(role);
+
+		Cart cart = new Cart();
+		cart.setItems(new ArrayList<>());
+		cart.setUser(user);
+		user.setCart(cart);
+
+		return userRepository.save(user);
 	}
 }
