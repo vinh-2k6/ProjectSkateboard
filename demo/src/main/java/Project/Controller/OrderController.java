@@ -2,8 +2,12 @@ package Project.Controller;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,10 +42,13 @@ public class OrderController {
         return ApiResponse.created(order);
     }
 
-    @GetMapping("/orders")
+    @GetMapping("my-orders")
     public ResponseEntity<ApiResponse<List<OrderResponseDTO>>> getOrders() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		Jwt jwt = (Jwt) auth.getPrincipal();
 
-        List<OrderResponseDTO> orders = this.orderService.fetchOrders();
+		Integer userId = Integer.valueOf(jwt.getClaimAsString("id"));
+        List<OrderResponseDTO> orders = this.orderService.fetchOrders(userId);
 
         return ApiResponse.success(orders);
     }

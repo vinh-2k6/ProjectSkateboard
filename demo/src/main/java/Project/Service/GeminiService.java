@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 
+// GeminiService có thể sử dụng geminiClient để gửi yêu cầu đến Gemini API và nhận kết quả trả về.
 @Service
 public class GeminiService {
 

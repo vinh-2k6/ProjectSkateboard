@@ -107,10 +107,10 @@ public class OrderService {
         );
     }
 
-    public List<OrderResponseDTO> fetchOrders() {
+    public List<OrderResponseDTO> fetchOrders(int userId) {
 
         List<OrderResponseDTO> orderResponseDTO = this.orderRepository
-                .findAll()
+                .searchOrdersOfUser(userId)
                 .stream()
                 .map(order -> {
                     return convertOrderToDTO(order);

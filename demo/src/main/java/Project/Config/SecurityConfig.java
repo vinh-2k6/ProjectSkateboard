@@ -72,7 +72,7 @@ public class SecurityConfig {
         // );
 
         http.oauth2ResourceServer(oath2 -> oath2
-                            .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
+                            .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))); //jwtAuthenticationConverter
         http.csrf(c -> c.disable());
         http.cors(cors -> {});
         http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

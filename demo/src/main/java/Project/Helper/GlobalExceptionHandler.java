@@ -3,12 +3,17 @@ package Project.Helper;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.security.core.AuthenticationException;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
 
 import Project.Exception.ResourceAlreadyExistsException;
 import Project.Exception.ResourceNotFoundException;
@@ -45,6 +50,14 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
 	}
 
-	
+	@ExceptionHandler({ BadCredentialsException.class, UsernameNotFoundException.class })
+	public ResponseEntity<?> handleAuthenticationException(
+			AuthenticationException ex) {
+
+		return ApiResponse.error(
+				HttpStatus.UNAUTHORIZED,
+				"Tên tài khoản hoặc mật khẩu không chính xác"
+		);
+	}
 
 }

@@ -11,6 +11,11 @@ public class GeminiConfig {
     @Value("${gemini.api-key}")
     private String apiKey;
 
+    /*
+        khi có một thành phần trong spring boot thì nó muốn Gemini của gg trả lời 
+        request thì nó gọi đến client xong client sử dụng api key để cho 
+        Gemini của gg biết ứng dụng nào cần trả lời.
+     */
     @Bean
     public Client geminiClient() {
         return Client.builder()
