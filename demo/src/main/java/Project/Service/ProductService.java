@@ -86,8 +86,8 @@ public class ProductService {
         return convertProductToDTO(product);
     }
 
-    public List<ProductResponseDTO> searchProducts(String keyword, String brand, Integer maxPrice, Integer minPrice, String type) {
-        return this.productRepository.searchProducts(keyword, brand, maxPrice, minPrice, type)
+    public List<ProductResponseDTO> searchProducts(String keyword, String brand, Integer minPrice, Integer maxPrice, String type) {
+        return this.productRepository.searchProducts(keyword, brand, minPrice, maxPrice, type)
                                     .stream()
                                     .map(product -> {
                                         return convertProductToDTO(product);
