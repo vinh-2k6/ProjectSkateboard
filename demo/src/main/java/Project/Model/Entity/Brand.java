@@ -31,7 +31,7 @@ public class Brand {
 
     @NotBlank(message = "description không được để trống")
     private String description;
-    //1111333333
+
     @OneToMany(mappedBy = "brand")
     private List<Product> products;
 }

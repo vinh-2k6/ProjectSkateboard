@@ -1,33 +1,64 @@
+
 package Project.Service;
 
 import Project.Model.DTO.Request.ProductSearchDTO;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Schema;
 import com.google.genai.types.Type;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 
-// GeminiService có thể sử dụng geminiClient để gửi yêu cầu đến Gemini API và nhận kết quả trả về.
 @Service
 public class GeminiService {
 
-    private final Client client;
     private final ObjectMapper objectMapper;
+    private final ContentGenerator contentGenerator;
 
+    // Constructor sử dụng khi chạy ứng dụng thật
+    @Autowired
     public GeminiService(Client client, ObjectMapper objectMapper) {
-        this.client = client;
+
         this.objectMapper = objectMapper;
+
+        this.contentGenerator = (model, prompt, config) ->
+                client.models.generateContent(
+                        model,
+                        prompt,
+                        config
+                );
+    }
+
+    // Constructor sử dụng trong Unit Test
+    GeminiService(
+            ObjectMapper objectMapper,
+            ContentGenerator contentGenerator) {
+
+        this.objectMapper = objectMapper;
+        this.contentGenerator = contentGenerator;
+    }
+
+    @FunctionalInterface
+    interface ContentGenerator {
+
+        GenerateContentResponse generate(
+                String model,
+                String prompt,
+                GenerateContentConfig config
+        );
     }
 
     public String chat(String message) {
 
         GenerateContentResponse response =
-                client.models.generateContent(
+                contentGenerator.generate(
                         "gemini-3.7-flash",
                         message,
                         null
@@ -37,11 +68,9 @@ public class GeminiService {
     }
 
     public ProductSearchDTO extractProductSearch(
-                                        String message,
-                                        List<String> categories,
-                                        List<String> brands
-                
-                                ) {
+            String message,
+            List<String> categories,
+            List<String> brands) {
 
         String prompt = """
                 Bạn là hệ thống phân tích yêu cầu tìm kiếm sản phẩm
@@ -58,12 +87,10 @@ public class GeminiService {
 
                 QUY TẮC:
 
-                - category phải là một giá trị trong danh sách category
-                ở trên.
-                - brand phải là một giá trị trong danh sách brand
-                ở trên.
+                - category phải là một giá trị trong danh sách category ở trên.
+                - brand phải là một giá trị trong danh sách brand ở trên.
                 - Nếu khách hàng dùng cách gọi khác,
-                hãy ánh xạ về giá trị tương ứng trong database.
+                  hãy ánh xạ về giá trị tương ứng trong database.
                 - Không tự tạo category hoặc brand mới.
                 - Nếu không xác định được thì trả về null.
 
@@ -83,11 +110,7 @@ public class GeminiService {
 
                 Câu hỏi:
                 %s
-                """.formatted(
-                        categories,
-                        brands,
-                        message
-                );
+                """.formatted(categories, brands, message);
 
         Schema nullableString = Schema.builder()
                 .anyOf(
@@ -133,7 +156,7 @@ public class GeminiService {
                         .build();
 
         GenerateContentResponse response =
-                client.models.generateContent(
+                contentGenerator.generate(
                         "gemini-3.7-flash",
                         prompt,
                         config
