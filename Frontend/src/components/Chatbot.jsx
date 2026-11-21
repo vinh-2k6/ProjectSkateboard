@@ -1,34 +1,46 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useLocation, Link } from 'react-router-dom';
 import { sendChatMessage } from '../services/chatService';
 
 const Chatbot = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
-        { sender: 'bot', text: 'Xin chào! Mình là tư vấn viên ProjectSkateBoard. Bạn cần tìm mẫu giày nào?' }
+        { sender: 'bot', text: 'Xin chào! Mình là tư vấn viên AI của ProjectSkateBoard. Bạn cần tìm hiểu mẫu ván hay giày nào?' }
     ]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const chatEndRef = useRef(null);
+
+    const location = useLocation();
+    // Bắt productId nếu người dùng đang ở trang /products/:id
+    const matchProduct = location.pathname.match(/^\/products\/(\d+)/);
+    const currentProductId = matchProduct ? matchProduct[1] : null;
 
     // Tự động cuộn xuống tin nhắn mới nhất
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, loading]);
 
-    const handleSend = async (e) => {
-        e.preventDefault();
-        if (!input.trim() || loading) return;
+    const handleSend = async (e, customText = null) => {
+        if (e && e.preventDefault) e.preventDefault();
+        const userText = (customText || input).trim();
+        if (!userText || loading) return;
 
-        const userText = input;
-        setInput('');
+        if (!customText) setInput('');
         setMessages((prev) => [...prev, { sender: 'user', text: userText }]);
         setLoading(true);
 
         try {
-            const data = await sendChatMessage(userText);
+            const data = await sendChatMessage(userText, currentProductId);
+            const replyText = data.reply || data.message || 'Không có phản hồi từ hệ thống.';
             setMessages((prev) => [
                 ...prev,
-                { sender: 'bot', text: data.reply, products: data.products }
+                { 
+                    sender: 'bot', 
+                    text: replyText, 
+                    products: data.products,
+                    type: data.type 
+                }
             ]);
         } catch (error) {
             setMessages((prev) => [
@@ -44,12 +56,15 @@ const Chatbot = () => {
         <div className="fixed bottom-6 right-6 z-50">
             {/* Cửa sổ Chat */}
             {isOpen && (
-                <div className="w-80 sm:w-96 h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col mb-4 overflow-hidden animate-in fade-in slide-in-from-bottom-5">
+                <div className="w-80 sm:w-96 h-[520px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col mb-4 overflow-hidden animate-in fade-in slide-in-from-bottom-5">
                     {/* Header */}
-                    <div className="bg-black text-white p-4 flex justify-between items-center">
+                    <div className="bg-black text-white p-4 flex justify-between items-center shadow-sm">
                         <div className="flex items-center gap-2">
-                            <span className="w-3 h-3 bg-green-500 rounded-full inline-block"></span>
-                            <h3 className="font-bold text-sm tracking-wide">ProjectSkateBoard AI</h3>
+                            <span className="w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse"></span>
+                            <div>
+                                <h3 className="font-bold text-sm tracking-wide">ProjectSkateBoard AI</h3>
+                                <p className="text-[10px] text-gray-300">Tư vấn chi tiết & Phối đồ</p>
+                            </div>
                         </div>
                         <button 
                             onClick={() => setIsOpen(false)}
@@ -59,51 +74,99 @@ const Chatbot = () => {
                         </button>
                     </div>
 
+                    {/* Banner ngữ cảnh nếu đang xem 1 sản phẩm cụ thể */}
+                    {currentProductId && (
+                        <div className="bg-amber-50 border-b border-amber-200 px-3 py-2 text-xs text-amber-800 flex items-center justify-between">
+                            <span>🎯 Đang xem sản phẩm #{currentProductId}</span>
+                            <span className="text-[10px] bg-amber-200 px-1.5 py-0.5 rounded font-medium">Chế độ tư vấn sâu</span>
+                        </div>
+                    )}
+
                     {/* Nội dung tin nhắn */}
                     <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50 text-sm">
                         {messages.map((msg, idx) => (
                             <div key={idx} className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
                                 <div className={`max-w-[85%] p-3 rounded-2xl ${
                                     msg.sender === 'user' 
-                                        ? 'bg-black text-white rounded-br-none' 
+                                        ? 'bg-black text-white rounded-br-none shadow-sm' 
                                         : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none shadow-sm'
                                 }`}>
-                                    <p className="whitespace-pre-line">{msg.text}</p>
+                                    <p className="whitespace-pre-line leading-relaxed">{msg.text}</p>
                                 </div>
 
-                                {/* Render danh sách sản phẩm gợi ý nếu có */}
+                                {/* Render danh sách sản phẩm gợi ý hoặc chi tiết sản phẩm nếu có */}
                                 {msg.products && msg.products.length > 0 && (
                                     <div className="mt-2 w-full space-y-2">
                                         {msg.products.map((prod, pIdx) => (
-                                            <div key={pIdx} className="p-2 bg-white rounded-lg border border-gray-200 flex justify-between items-center text-xs shadow-sm">
-                                                <span className="font-semibold text-gray-800 truncate max-w-[160px]">{prod.name}</span>
-                                                <span className="text-black font-bold">{prod.price?.toLocaleString()} đ</span>
-                                            </div>
+                                            <Link 
+                                                to={`/products/${prod.id}`}
+                                                key={pIdx} 
+                                                className="p-2.5 bg-white rounded-xl border border-gray-200 flex items-center gap-3 text-xs shadow-sm hover:border-black transition"
+                                            >
+                                                {prod.image && (
+                                                    <img 
+                                                        src={prod.image} 
+                                                        alt={prod.name} 
+                                                        className="w-10 h-10 object-cover rounded-lg flex-shrink-0"
+                                                        onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff"; }}
+                                                    />
+                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    <span className="font-semibold text-gray-900 truncate block">{prod.name}</span>
+                                                    <span className="text-black font-bold">{prod.price?.toLocaleString()} đ</span>
+                                                </div>
+                                                <span className="text-gray-400 text-xs">Xem →</span>
+                                            </Link>
                                         ))}
                                     </div>
                                 )}
                             </div>
                         ))}
                         {loading && (
-                            <div className="flex items-center gap-2 text-gray-500 text-xs italic">
-                                <span>Bot đang suy nghĩ...</span>
+                            <div className="flex items-center gap-2 text-gray-500 text-xs italic bg-white p-2.5 rounded-xl border border-gray-100 max-w-[70%]">
+                                <span className="inline-block w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
+                                <span>AI đang phân tích sản phẩm...</span>
                             </div>
                         )}
                         <div ref={chatEndRef} />
                     </div>
 
+                    {/* Gợi ý câu hỏi nhanh nếu đang xem sản phẩm */}
+                    {currentProductId && !loading && (
+                        <div className="px-3 py-1.5 bg-gray-100 border-t border-gray-200 flex gap-1.5 overflow-x-auto text-[11px] no-scrollbar">
+                            <button
+                                onClick={() => handleSend(null, "Sản phẩm này có những ưu điểm nổi bật gì?")}
+                                className="whitespace-nowrap px-2.5 py-1 bg-white border border-gray-300 rounded-full hover:bg-gray-50 text-gray-700"
+                            >
+                                ✨ Ưu điểm nổi bật?
+                            </button>
+                            <button
+                                onClick={() => handleSend(null, "Mẫu này có phù hợp với người mới bắt đầu không?")}
+                                className="whitespace-nowrap px-2.5 py-1 bg-white border border-gray-300 rounded-full hover:bg-gray-50 text-gray-700"
+                            >
+                                🛹 Người mới có hợp?
+                            </button>
+                            <button
+                                onClick={() => handleSend(null, "Sản phẩm này có độ bền và chất liệu như thế nào?")}
+                                className="whitespace-nowrap px-2.5 py-1 bg-white border border-gray-300 rounded-full hover:bg-gray-50 text-gray-700"
+                            >
+                                🔍 Chất liệu & độ bền?
+                            </button>
+                        </div>
+                    )}
+
                     {/* Input nhập tin nhắn */}
                     <form onSubmit={handleSend} className="p-3 bg-white border-t border-gray-200 flex gap-2">
                         <input
                             type="text"
-                            placeholder="Hỏi về sản phẩm, giá..."
+                            placeholder={currentProductId ? "Hỏi chi tiết về sản phẩm này..." : "Hỏi về sản phẩm, giá..."}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             className="flex-1 px-3 py-2 border rounded-xl text-sm focus:outline-none focus:border-black"
                         />
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || !input.trim()}
                             className="bg-black text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-gray-800 transition disabled:opacity-50"
                         >
                             Gửi

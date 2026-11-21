@@ -12,4 +12,5 @@ import lombok.Setter;
 public class ChatRequestDTO {
 
     private String message;
+    private Integer productId;
 }

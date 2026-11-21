@@ -51,10 +51,6 @@ export default function ProductDetail() {
 
     const targetProductId = product.id || id;
 
-    console.log("userId:", userId);
-    console.log("productId:", targetProductId);
-    console.log("quantity:", quantity);
-
     try {
       setAdding(true);
       setMessage(null);
@@ -65,25 +61,23 @@ export default function ProductDetail() {
       setMessage({ type: 'success', text: 'Đã thêm sản phẩm vào giỏ hàng!' });
     } catch (error) {
       console.error('Lỗi thêm sản phẩm:', error);
-      console.log("STATUS:", error.response?.status);
-      console.log("DATA:", error.response?.data);
-      console.log("REQUEST:", error.config?.data);
       setMessage({ type: 'error', text: 'Thêm vào giỏ hàng thất bại. Vui lòng thử lại!' });
     } finally {
       setAdding(false);
     }
   };
-  
 
   if (loading) {
-    return <div className="text-center py-20 font-medium">Đang tải thông tin sản phẩm...</div>;
+    return <div className="text-center py-20 font-medium text-gray-500">Đang tải thông tin sản phẩm...</div>;
   }
 
   if (!product) {
     return (
       <div className="text-center py-20">
         <p className="text-red-500 font-medium mb-4">Không tìm thấy sản phẩm!</p>
-        <button onClick={() => navigate('/products')} className="underline">Quay lại danh sách</button>
+        <button onClick={() => navigate('/products')} className="underline text-blue-600 hover:text-blue-800">
+          Quay lại danh sách
+        </button>
       </div>
     );
   }
@@ -92,70 +86,82 @@ export default function ProductDetail() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* Nút Quay lại */}
       <button 
         onClick={() => navigate(-1)} 
-        className="text-gray-500 hover:text-black mb-6 inline-flex items-center gap-1 text-sm font-medium"
+        className="text-gray-500 hover:text-black mb-6 inline-flex items-center gap-1.5 text-sm font-medium transition"
       >
         ← Quay lại
       </button>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-        <div className="bg-gray-100 rounded-2xl p-8 flex items-center justify-center min-h-[350px]">
+      {/* Phần trên: Ảnh sản phẩm + Thông tin mua hàng */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-14 items-start">
+        {/* Cột trái: Khung ảnh sản phẩm */}
+        <div className="bg-gray-50 border border-gray-100 rounded-3xl p-8 flex items-center justify-center min-h-[380px] shadow-sm sticky top-24">
           <img 
             src={imageUrl} 
             alt={product.name} 
-            className="w-full h-auto object-contain max-h-[400px]"
+            className="w-full h-auto object-contain max-h-[420px] transition duration-300 hover:scale-105"
             onError={(e) => {
               e.target.src = DEFAULT_IMAGE;
             }}
           />
         </div>
 
+        {/* Cột phải: Tên, giá, chọn số lượng, đặt mua */}
         <div className="space-y-6">
-          <span className="text-xs font-bold tracking-wider text-gray-400 uppercase">
-            {product.category?.name || 'SPORT'}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold tracking-wider text-blue-600 uppercase bg-blue-50 px-2.5 py-1 rounded-md">
+              {product.brand?.name || 'NIKE'}
+            </span>
+            <span className="text-xs font-bold tracking-wider text-gray-500 uppercase bg-gray-100 px-2.5 py-1 rounded-md">
+              {product.category?.name || 'SNEAKER'}
+            </span>
+          </div>
 
-          <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">
+            {product.name}
+          </h1>
 
-          <p className="text-2xl font-bold text-blue-600">
-            {product.price?.toLocaleString('vi-VN')} ₫
-          </p>
-
-          <p className="text-gray-500 text-sm leading-relaxed">
-            {product.description || 'Chưa có mô tả cho sản phẩm này.'}
-          </p>
+          <div className="flex items-baseline gap-3">
+            <p className="text-3xl font-extrabold text-blue-600">
+              {product.price?.toLocaleString('vi-VN')} ₫
+            </p>
+          </div>
 
           <hr className="border-gray-200" />
 
-          {/* Tình trạng kho - Đã sửa chính xác thuộc tính product.quantity */}
-          <p className="text-sm">
-            Tình trạng:{' '}
+          {/* Tình trạng kho */}
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-gray-500">Tình trạng:</span>
             {product.quantity > 0 ? (
-              <span className="text-green-600 font-semibold">
+              <span className="text-green-600 font-semibold bg-green-50 px-2 py-0.5 rounded-full text-xs">
                 Còn hàng ({product.quantity} sản phẩm)
               </span>
             ) : (
-              <span className="text-red-600 font-semibold">
+              <span className="text-red-600 font-semibold bg-red-50 px-2 py-0.5 rounded-full text-xs">
                 Hết hàng
               </span>
             )}
-          </p>
+          </div>
 
+          {/* Chọn số lượng */}
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium">Số lượng:</span>
-            <div className="flex items-center border rounded-md">
+            <span className="text-sm font-medium text-gray-700">Số lượng:</span>
+            <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm">
               <button
                 onClick={() => handleQuantityChange('decrease')}
-                className="px-3 py-1 hover:bg-gray-100 text-gray-600 font-medium"
+                className="px-3.5 py-1.5 hover:bg-gray-100 text-gray-600 font-medium transition"
                 disabled={quantity <= 1}
               >
                 -
               </button>
-              <span className="px-4 py-1 font-semibold text-sm">{quantity}</span>
+              <span className="px-5 py-1.5 font-bold text-sm text-gray-800 border-x border-gray-200 min-w-[45px] text-center">
+                {quantity}
+              </span>
               <button
                 onClick={() => handleQuantityChange('increase')}
-                className="px-3 py-1 hover:bg-gray-100 text-gray-600 font-medium"
+                className="px-3.5 py-1.5 hover:bg-gray-100 text-gray-600 font-medium transition"
                 disabled={quantity >= product.quantity}
               >
                 +
@@ -163,17 +169,27 @@ export default function ProductDetail() {
             </div>
           </div>
 
+          {/* Nút Thêm vào giỏ */}
           <button
             onClick={handleAddToCart}
             disabled={adding || product.quantity <= 0}
-            className="w-full bg-black text-white py-3.5 rounded-lg font-bold hover:bg-gray-800 transition duration-200 disabled:opacity-50"
+            className="w-full bg-black text-white py-4 rounded-xl font-bold hover:bg-gray-800 transition duration-200 shadow-md hover:shadow-lg disabled:opacity-50"
           >
             {adding ? 'Đang thêm...' : product.quantity <= 0 ? 'Sản phẩm đã hết hàng' : 'Thêm Vào Giỏ Hàng'}
           </button>
 
+          {/* Banner gợi ý hỏi AI */}
+          <div className="p-3.5 bg-amber-50/80 border border-amber-200/80 rounded-xl flex items-center justify-between text-xs shadow-sm">
+            <div>
+              <p className="font-semibold text-amber-900">✨ Cần tư vấn chi tiết hoặc cách phối đồ?</p>
+              <p className="text-amber-700 text-[11px] mt-0.5">Bấm biểu tượng Chatbot AI ở góc phải để nhận tư vấn tức thì!</p>
+            </div>
+            <span className="text-2xl">🤖</span>
+          </div>
+
           {message && (
             <div
-              className={`p-3 rounded-md text-sm text-center ${
+              className={`p-3.5 rounded-xl text-sm text-center font-medium ${
                 message.type === 'success'
                   ? 'bg-green-50 text-green-700 border border-green-200'
                   : 'bg-red-50 text-red-700 border border-red-200'
@@ -182,6 +198,23 @@ export default function ProductDetail() {
               {message.text}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Phần dưới: MÔ TẢ CHI TIẾT SẢN PHẨM (Format chuẩn, xuống dòng đẹp mắt) */}
+      <div className="mt-14 pt-10 border-t border-gray-200">
+        <div className="bg-white rounded-2xl p-6 sm:p-10 border border-gray-200 shadow-sm">
+          <div className="flex items-center gap-3 pb-4 mb-6 border-b border-gray-200">
+            <span className="w-1.5 h-6 bg-black rounded-full inline-block"></span>
+            <h2 className="text-xl font-extrabold text-gray-900 tracking-wide uppercase">
+              Mô Tả Sản Phẩm
+            </h2>
+          </div>
+
+          {/* Văn bản mô tả giữ nguyên ngắt dòng, icon và khoảng cách chuẩn */}
+          <div className="text-gray-700 text-sm sm:text-base leading-relaxed whitespace-pre-line font-normal space-y-4">
+            {product.description || 'Chưa có thông tin mô tả chi tiết cho sản phẩm này.'}
+          </div>
         </div>
       </div>
     </div>
