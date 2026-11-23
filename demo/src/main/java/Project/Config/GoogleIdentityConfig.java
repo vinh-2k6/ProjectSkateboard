@@ -15,6 +15,8 @@ import com.google.api.client.json.gson.GsonFactory;
 @Configuration
 public class GoogleIdentityConfig {
 
+    // Client ID này giúp backend xác định Google ID Token 
+    // phải được cấp cho đúng ứng dụng của mình, chứ không phải token của một ứng dụng khác.
     @Value("${google.client-id}")
     private String googleClientId;
 
@@ -27,6 +29,8 @@ public class GoogleIdentityConfig {
         // Public Key được Google công bố để backend có thể xác minh chữ ký. Dùng Public Key kiểm tra Signature trong ID Token.
         // transport cung cấp phương tiện HTTP để thư viện thực hiện việc giao tiếp cần thiết với Google.
         // Cung cấp phương tiện HTTP để thư viện lấy các Public Key của Google.
+        // Tạo HTTP transport để thư viện Google có thể thực hiện các giao tiếp HTTP cần thiết, 
+        // chẳng hạn lấy public keys (certificates) của Google phục vụ xác minh chữ ký token.
         NetHttpTransport transport =
                 new NetHttpTransport.Builder().build();
 

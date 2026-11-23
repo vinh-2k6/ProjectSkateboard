@@ -59,23 +59,30 @@ public class SecurityConfig {
         return new ProviderManager(daoAuthenticationProvider);
     }
 
-    @Bean 
+    @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(request -> request
-                                    .requestMatchers("/auth/login", "/auth/register", "/auth/google",
-                                    "/products", "/products/{id}", "/ws/**", "/orders/**"
-                                    ).permitAll()
-                                    .anyRequest().authenticated()
+                .requestMatchers(
+                        "/api/v1/auth/login",
+                        "/api/v1/auth/register",
+                        "/api/v1/auth/google",
+                        "/api/v1/products",
+                        "/api/v1/products/{id}",
+                        "/ws/**"
+                ).permitAll()
+                .anyRequest().authenticated()
         );
 
-        // http.authorizeHttpRequests(request -> request.anyRequest().permitAll()
-        // );
+        http.oauth2ResourceServer(oauth2 -> oauth2
+                .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+        );
 
-        http.oauth2ResourceServer(oath2 -> oath2
-                            .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))); //jwtAuthenticationConverter
         http.csrf(c -> c.disable());
         http.cors(cors -> {});
-        http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        http.sessionManagement(sm ->
+                sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        );
+
         return http.build();
     }
 

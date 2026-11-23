@@ -2,6 +2,7 @@ package Project.Model.Entity;
 
 import java.util.List;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -35,6 +36,7 @@ public class Product {
     private String name;
 
     @NotBlank(message = "description không được để trống")
+    @Column(columnDefinition = "TEXT", nullable = false)
 	private String description;
     
     @NotNull(message = "Price không được để trống")

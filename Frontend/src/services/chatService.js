@@ -1,7 +1,10 @@
 import api from './api';
 
-export const sendChatMessage = async (message, productId = null) => {
-    const payload = { message };
+export const sendChatMessage = async (message, productId = null, options = {}) => {
+    const payload = { 
+        message,
+        ...options
+    };
     if (productId) {
         payload.productId = Number(productId);
     }
