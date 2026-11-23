@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { cartService } from '../services/cartService';
 
 export default function ProductDetail() {
@@ -22,7 +22,7 @@ export default function ProductDetail() {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:8090/products/${id}`);
+        const response = await api.get(`/products/${id}`);
         // API trả về dạng ApiResponse { message, data: { ... } }
         const data = response.data?.data || response.data;
         setProduct(data);

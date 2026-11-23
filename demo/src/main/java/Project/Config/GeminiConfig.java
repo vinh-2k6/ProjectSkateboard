@@ -13,7 +13,7 @@ public class GeminiConfig {
 
     /*
         khi có một thành phần trong spring boot thì nó muốn Gemini của gg trả lời 
-        request thì nó gọi đến client xong client sử dụng api key để cho 
+        request thì nó gọi đến đối tượng Client xong Client sử dụng api key để cho 
         Gemini của gg biết ứng dụng nào cần trả lời.
      */
     @Bean

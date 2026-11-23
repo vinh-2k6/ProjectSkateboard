@@ -5,11 +5,10 @@ import org.springframework.web.bind.annotation.*;
 import Project.Model.DTO.Request.ChatRequestDTO;
 import Project.Model.DTO.Response.ChatResponseDTO;
 import Project.Service.ChatService;
-import Project.Service.GeminiService;
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 
 @RestController
+@RequestMapping("/api/v1")
 @AllArgsConstructor 
 public class ChatController {
 
@@ -17,6 +16,6 @@ public class ChatController {
 
     @PostMapping("/chat")
     public ChatResponseDTO chat(@RequestBody ChatRequestDTO request) {
-        return chatService.chat(request.getMessage());
+        return chatService.chat(request);
     }
 }

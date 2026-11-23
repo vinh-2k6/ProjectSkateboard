@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../services/authService";
 import "./AuthPage.css";
-import axios from "axios";
+import api from "../services/api";
 import { GoogleLogin } from "@react-oauth/google";
 
 function Login() {
@@ -77,11 +77,11 @@ const handleGoogleSuccess = async (credentialResponse) => {
   setLoading(true);
 
   try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/auth/google`,
+    const response = await api.post(
+      "/auth/google",
       { credential },
       { withCredentials: true }
-    );
+  );
 
     console.log("Google login response:", response.data);
 
