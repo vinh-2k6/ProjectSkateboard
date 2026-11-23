@@ -19,14 +19,22 @@ import java.util.Map;
 @Service
 public class GeminiService {
 
+    private static final String DEFAULT_MODEL = "gemini-3.5-flash";
+    private static final String FALLBACK_MODEL = "gemini-flash-lite-latest";
+
     private final ObjectMapper objectMapper;
     private final ContentGenerator contentGenerator;
+    private final String modelName;
 
     // Constructor sử dụng khi chạy ứng dụng thật
     @Autowired
-    public GeminiService(Client client, ObjectMapper objectMapper) {
+    public GeminiService(
+            Client client,
+            ObjectMapper objectMapper,
+            @org.springframework.beans.factory.annotation.Value("${gemini.model:gemini-3.5-flash}") String modelName) {
 
         this.objectMapper = objectMapper;
+        this.modelName = (modelName != null && !modelName.isBlank()) ? modelName : DEFAULT_MODEL;
 
         this.contentGenerator = (model, prompt, config) ->
                 client.models.generateContent(
@@ -43,6 +51,7 @@ public class GeminiService {
 
         this.objectMapper = objectMapper;
         this.contentGenerator = contentGenerator;
+        this.modelName = DEFAULT_MODEL;
     }
 
     @FunctionalInterface
@@ -56,13 +65,20 @@ public class GeminiService {
     }
 
     public String chat(String message) {
-
-        GenerateContentResponse response =
-                contentGenerator.generate(
-                        "gemini-3.7-flash",
-                        message,
-                        null
-                );
+        GenerateContentResponse response;
+        try {
+            response = contentGenerator.generate(
+                    this.modelName,
+                    message,
+                    null
+            );
+        } catch (Exception e) {
+            response = contentGenerator.generate(
+                    FALLBACK_MODEL,
+                    message,
+                    null
+            );
+        }
 
         return response.text();
     }
@@ -155,12 +171,20 @@ public class GeminiService {
                         .responseSchema(productSearchSchema)
                         .build();
 
-        GenerateContentResponse response =
-                contentGenerator.generate(
-                        "gemini-3.7-flash",
-                        prompt,
-                        config
-                );
+        GenerateContentResponse response;
+        try {
+            response = contentGenerator.generate(
+                    this.modelName,
+                    prompt,
+                    config
+            );
+        } catch (Exception e) {
+            response = contentGenerator.generate(
+                    FALLBACK_MODEL,
+                    prompt,
+                    config
+            );
+        }
 
         try {
 

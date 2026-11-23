@@ -15,7 +15,7 @@ public class ChatController {
     private final ChatService chatService;
 
     @PostMapping("/chat")
-    public ChatResponseDTO chat(String message) {
-        return chatService.chat(message);
+    public ChatResponseDTO chat(@RequestBody ChatRequestDTO request) {
+        return chatService.chat(request);
     }
 }
