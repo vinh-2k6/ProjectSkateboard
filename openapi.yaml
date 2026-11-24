@@ -1,0 +1,1163 @@
+openapi: 3.0.3
+info:
+  title: AI Fashion Platform API
+  description: |
+    API Contract cho nền tảng trợ lý mua sắm thời trang thông minh tích hợp AI (AI-powered Fashion Shopping Assistant).
+    Hệ thống cung cấp các dịch vụ:
+    - Xác thực tài khoản (Google OAuth2 & Local JWT)
+    - Quản lý danh mục, sản phẩm và biến thể size
+    - Quản lý giỏ hàng và đặt hàng (Cart & Order flow)
+    - Trợ lý AI tư vấn chọn đồ & phối đồ (Gemini AI Stylist)
+    - AI phân tích, đối sánh thông tin và giá sản phẩm giữa các sàn TMĐT (Shopee, Tiki, Lazada)
+  version: 1.0.0
+  contact:
+    name: AI Fashion Platform Development Team
+    email: support@aifashion.local
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local Development & Mock Server
+  - url: https://api.aifashion.vn/v1
+    description: Production Server
+
+tags:
+  - name: Authentication
+    description: Đăng ký, đăng nhập email/mật khẩu, xác thực Google OAuth2 và cấp lại token
+  - name: Products
+    description: Tra cứu sản phẩm, xem chi tiết và kiểm tra tồn kho theo size
+  - name: Market Comparison
+    description: So sánh thông tin, giá bán và nhận xét giữa shop với các sàn TMĐT qua AI
+  - name: AI Stylist & Chat
+    description: Trò chuyện với trợ lý AI và nhận đề xuất phối đồ thông minh
+  - name: Cart
+    description: Quản lý giỏ hàng lưu trữ trên máy chủ
+  - name: Orders
+    description: Tạo và quản lý đơn đặt hàng
+
+paths:
+  # ==========================================
+  # AUTHENTICATION ENDPOINTS
+  # ==========================================
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Đăng ký tài khoản mới bằng Email
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Đăng ký thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '409':
+          description: Email đã tồn tại trong hệ thống
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Đăng nhập bằng Email và Mật khẩu
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Đăng nhập thành công, trả về Access Token & Refresh Token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /auth/google:
+    post:
+      tags:
+        - Authentication
+      summary: Đăng nhập bằng Google OAuth2 ID Token
+      operationId: loginWithGoogle
+      description: Nhận ID Token từ Google Identity Services trên Frontend, xác thực và trả về JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoogleLoginRequest'
+      responses:
+        '200':
+          description: Xác thực Google thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /auth/refresh-token:
+    post:
+      tags:
+        - Authentication
+      summary: Làm mới Access Token khi hết hạn
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Cấp Access Token mới thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  # ==========================================
+  # PRODUCT ENDPOINTS
+  # ==========================================
+  /products:
+    get:
+      tags:
+        - Products
+      summary: Lấy danh sách sản phẩm (có lọc, tìm kiếm và phân trang)
+      operationId: getProducts
+      parameters:
+        - name: page
+          in: query
+          description: Số trang (bắt đầu từ 0)
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          description: Số sản phẩm mỗi trang
+          schema:
+            type: integer
+            default: 10
+        - name: keyword
+          in: query
+          description: Từ khóa tìm kiếm theo tên hoặc mô tả
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          description: Lọc theo mã danh mục
+          schema:
+            type: integer
+        - name: brandId
+          in: query
+          description: Lọc theo mã thương hiệu
+          schema:
+            type: integer
+        - name: sort
+          in: query
+          description: Sắp xếp theo trường và chiều (ví dụ price,desc hoặc createdAt,desc)
+          schema:
+            type: string
+            default: createdAt,desc
+      responses:
+        '200':
+          description: Lấy danh sách sản phẩm thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductPageResponse'
+
+  /products/{id}:
+    get:
+      tags:
+        - Products
+      summary: Xem thông tin chi tiết một sản phẩm
+      operationId: getProductById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID của sản phẩm
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Thông tin chi tiết sản phẩm
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetailResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /products/{id}/sizes:
+    get:
+      tags:
+        - Products
+      summary: Lấy danh sách kích thước (size) và số lượng tồn kho
+      operationId: getProductSizes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Danh sách biến thể size và tồn kho
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductSizeResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  # ==========================================
+  # MARKETPLACE COMPARISON & AI ENDPOINTS
+  # ==========================================
+  /products/{id}/market-comparison:
+    get:
+      tags:
+        - Market Comparison
+      summary: Lấy bảng đối sánh sản phẩm đa sàn và nhận xét từ AI
+      operationId: getMarketComparison
+      description: Trả về dữ liệu so sánh giá, lượt mua, đánh giá từ Shopee, Tiki, Lazada cùng phân tích tổng hợp từ Gemini AI
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Kết quả đối sánh thị trường và đề xuất AI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketComparisonResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ai/compare-market:
+    post:
+      tags:
+        - Market Comparison
+      summary: Kích hoạt AI phân tích so sánh sản phẩm theo tiêu chí tùy chỉnh
+      operationId: triggerCustomComparison
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomComparisonRequest'
+      responses:
+        '200':
+          description: Kết quả phân tích tùy chỉnh
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketComparisonResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+
+  # ==========================================
+  # AI STYLIST & CHAT ENDPOINTS
+  # ==========================================
+  /ai/stylist:
+    post:
+      tags:
+        - AI Stylist & Chat
+      summary: Đề xuất set phối đồ (Outfit Recommendation) qua Gemini AI
+      operationId: getOutfitRecommendation
+      description: Gửi thông số thể hình và phong cách mong muốn để nhận gợi ý phối đồ kèm danh sách sản phẩm trong shop
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OutfitStylistRequest'
+      responses:
+        '200':
+          description: Đề xuất bộ trang phục thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutfitRecommendationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+
+  /chat/sessions:
+    post:
+      tags:
+        - AI Stylist & Chat
+      summary: Khởi tạo phiên trò chuyện mới với AI
+      operationId: createChatSession
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: Khởi tạo phiên chat thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatSessionResponse'
+
+  /chat/sessions/{sessionId}/messages:
+    get:
+      tags:
+        - AI Stylist & Chat
+      summary: Lấy lịch sử tin nhắn trong một phiên chat
+      operationId: getChatHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Danh sách tin nhắn
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChatMessageResponse'
+    post:
+      tags:
+        - AI Stylist & Chat
+      summary: Gửi tin nhắn và nhận phản hồi tư vấn từ AI
+      operationId: sendChatMessage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '200':
+          description: Phản hồi từ AI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+
+  # ==========================================
+  # CART ENDPOINTS
+  # ==========================================
+  /cart:
+    get:
+      tags:
+        - Cart
+      summary: Lấy giỏ hàng hiện tại của người dùng
+      operationId: getCart
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Chi tiết giỏ hàng
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /cart/items:
+    post:
+      tags:
+        - Cart
+      summary: Thêm sản phẩm và size đã chọn vào giỏ hàng
+      operationId: addToCart
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddToCartRequest'
+      responses:
+        '200':
+          description: Thêm vào giỏ hàng thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /cart/items/{itemId}:
+    put:
+      tags:
+        - Cart
+      summary: Cập nhật số lượng của một món đồ trong giỏ
+      operationId: updateCartItemQuantity
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCartItemRequest'
+      responses:
+        '200':
+          description: Cập nhật số lượng thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+    delete:
+      tags:
+        - Cart
+      summary: Xóa một món đồ khỏi giỏ hàng
+      operationId: removeCartItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Đã xóa thành công khỏi giỏ hàng
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  # ==========================================
+  # ORDER ENDPOINTS
+  # ==========================================
+  /orders:
+    get:
+      tags:
+        - Orders
+      summary: Lấy lịch sử đơn hàng của người dùng
+      operationId: getUserOrders
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Danh sách đơn đặt hàng
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    post:
+      tags:
+        - Orders
+      summary: Đặt hàng từ giỏ hàng hiện tại (Checkout)
+      operationId: createOrder
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Đặt hàng thành công, kích hoạt thông báo qua WebSocket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /orders/{id}:
+    get:
+      tags:
+        - Orders
+      summary: Xem chi tiết một đơn đặt hàng
+      operationId: getOrderById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Chi tiết đơn hàng
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+# ==========================================
+# COMPONENTS & SCHEMAS
+# ==========================================
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Nhập Access Token JWT (ví dụ 'Bearer eyJhbGciOiJIUzI1NiIsInR5c...')
+
+  responses:
+    BadRequestError:
+      description: Dữ liệu gửi lên không hợp lệ
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2026-11-24T23:00:00Z"
+            status: 400
+            error: "BAD_REQUEST"
+            message: "Size 41 cho mẫu sản phẩm này đã hết hàng"
+            path: "/api/v1/cart/items"
+
+    UnauthorizedError:
+      description: Chưa xác thực hoặc Token không hợp lệ / hết hạn
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2026-11-24T23:00:00Z"
+            status: 401
+            error: "UNAUTHORIZED"
+            message: "JWT Token đã hết hạn hoặc không hợp lệ"
+            path: "/api/v1/cart"
+
+    NotFoundError:
+      description: Không tìm thấy tài nguyên
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2026-11-24T23:00:00Z"
+            status: 404
+            error: "NOT_FOUND"
+            message: "Không tìm thấy sản phẩm có ID 999"
+            path: "/api/v1/products/999"
+
+    InternalServerError:
+      description: Lỗi máy chủ hoặc lỗi kết nối dịch vụ ngoài
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2026-11-24T23:00:00Z"
+            status: 500
+            error: "INTERNAL_SERVER_ERROR"
+            message: "Không thể kết nối đến Gemini AI Service. Vui lòng thử lại sau."
+            path: "/api/v1/products/12/market-comparison"
+
+  schemas:
+    # --- Error Response ---
+    ErrorResponse:
+      type: object
+      required:
+        - timestamp
+        - status
+        - error
+        - message
+        - path
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+          example: 400
+        error:
+          type: string
+          example: "BAD_REQUEST"
+        message:
+          type: string
+          example: "Dữ liệu yêu cầu không hợp lệ"
+        path:
+          type: string
+          example: "/api/v1/cart/items"
+
+    # --- Auth Schemas ---
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - fullName
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          example: P@ssw0rd123
+        fullName:
+          type: string
+          example: Nguyễn Văn A
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          example: P@ssw0rd123
+
+    GoogleLoginRequest:
+      type: object
+      required:
+        - idToken
+      properties:
+        idToken:
+          type: string
+          description: ID Token trả về từ Google Identity Services
+          example: eyJhbGciOiJSUzI1NiIsImtpZCI6IjFhMmIzY...
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          example: 8f3b23e1-92b4-4b53-b0a6-12c4d9a6c901
+
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refreshToken:
+          type: string
+          example: 8f3b23e1-92b4-4b53-b0a6-12c4d9a6c901
+        tokenType:
+          type: string
+          example: Bearer
+        expiresIn:
+          type: integer
+          description: Thời gian sống tính bằng giây (ví dụ 3600 = 1 giờ)
+          example: 3600
+        user:
+          $ref: '#/components/schemas/UserSummary'
+
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          example: user@example.com
+        fullName:
+          type: string
+          example: Nguyễn Văn A
+        avatarUrl:
+          type: string
+          example: https://lh3.googleusercontent.com/a/sample
+        role:
+          type: string
+          example: ROLE_USER
+
+    # --- Product Schemas ---
+    ProductPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductResponse'
+        page:
+          type: integer
+          example: 0
+        size:
+          type: integer
+          example: 10
+        totalElements:
+          type: integer
+          example: 45
+        totalPages:
+          type: integer
+          example: 5
+
+    ProductResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 12
+        name:
+          type: string
+          example: Giày Skateboard Pro Classic Suede
+        slug:
+          type: string
+          example: giay-skateboard-pro-classic-suede
+        price:
+          type: number
+          example: 650000
+        mainImage:
+          type: string
+          example: https://storage.aifashion.vn/products/shoes-01.jpg
+        categoryName:
+          type: string
+          example: Giày Trượt Ván
+        brandName:
+          type: string
+          example: Vans
+        rating:
+          type: number
+          example: 4.8
+
+    ProductDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 12
+        name:
+          type: string
+          example: Giày Skateboard Pro Classic Suede
+        description:
+          type: string
+          example: Mẫu giày thiết kế chuyên dụng cho dân trượt ván với đế cao su vulcanized tăng độ bám và lót đệm giảm chấn.
+        price:
+          type: number
+          example: 650000
+        mainImage:
+          type: string
+          example: https://storage.aifashion.vn/products/shoes-01.jpg
+        images:
+          type: array
+          items:
+            type: string
+          example:
+            - https://storage.aifashion.vn/products/shoes-01-side.jpg
+            - https://storage.aifashion.vn/products/shoes-01-sole.jpg
+        categoryName:
+          type: string
+          example: Giày Trượt Ván
+        brandName:
+          type: string
+          example: Vans
+        availableSizes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductSizeResponse'
+
+    ProductSizeResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 101
+        sizeValue:
+          type: string
+          example: "41"
+        stockQuantity:
+          type: integer
+          example: 15
+
+    # --- Market Comparison Schemas ---
+    MarketComparisonResponse:
+      type: object
+      properties:
+        productId:
+          type: integer
+          example: 12
+        productName:
+          type: string
+          example: Giày Skateboard Pro Classic Suede
+        internalPrice:
+          type: number
+          example: 650000
+        analyzedAt:
+          type: string
+          format: date-time
+          example: "2026-11-24T23:00:00Z"
+        platforms:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformProductItem'
+        aiAnalysis:
+          $ref: '#/components/schemas/AIAnalysisSummary'
+
+    PlatformProductItem:
+      type: object
+      properties:
+        platformName:
+          type: string
+          example: SHOPEE
+        platformProductName:
+          type: string
+          example: Giày Skate Streetwear Da Lộn Chính Hãng
+        price:
+          type: number
+          example: 590000
+        ratingScore:
+          type: number
+          example: 4.7
+        reviewCount:
+          type: integer
+          example: 142
+        productUrl:
+          type: string
+          example: https://shopee.vn/sample-shoes-item-123
+        imageUrl:
+          type: string
+          example: https://cf.shopee.vn/file/sample-img
+
+    AIAnalysisSummary:
+      type: object
+      properties:
+        priceComparisonSummary:
+          type: string
+          example: Giá shop cao hơn sàn Shopee 60.000đ nhưng cam kết hàng xuất khẩu có bảo hành đường may và đổi trả 14 ngày.
+        pros:
+          type: array
+          items:
+            type: string
+          example:
+            - Đế cao su chuyên dụng bền gấp 2 lần đế thời trang thông thường
+            - Có đầy đủ bảo hành chính hãng và hỗ trợ đổi size miễn phí
+        cons:
+          type: array
+          items:
+            type: string
+          example:
+            - Giá khởi điểm nhỉnh hơn các shop không rõ nguồn gốc 10%
+        recommendation:
+          type: string
+          example: Rất đáng mua nếu bạn chơi trượt ván thường xuyên vì độ bám ván (grip) vượt trội so với mẫu trên Tiki.
+
+    CustomComparisonRequest:
+      type: object
+      required:
+        - targetProductId
+      properties:
+        targetProductId:
+          type: integer
+          example: 12
+        platforms:
+          type: array
+          items:
+            type: string
+          example: ["SHOPEE", "TIKI", "LAZADA"]
+        criteria:
+          type: array
+          items:
+            type: string
+          example: ["price", "durability", "warranty"]
+
+    # --- AI Stylist Schemas ---
+    OutfitStylistRequest:
+      type: object
+      required:
+        - style
+      properties:
+        heightCm:
+          type: integer
+          example: 172
+        weightKg:
+          type: integer
+          example: 64
+        shoeSize:
+          type: string
+          example: "41"
+        gender:
+          type: string
+          enum: [MALE, FEMALE, UNISEX]
+          example: UNISEX
+        style:
+          type: string
+          example: "Streetwear rộng rãi phong cách Y2K để đi trượt ván cuối tuần"
+
+    OutfitRecommendationResponse:
+      type: object
+      properties:
+        conceptTitle:
+          type: string
+          example: "Phối Đồ Streetwear Y2K Ván Trượt Đường Phố"
+        stylingAdvice:
+          type: string
+          example: "Với chiều cao 172cm và size giày 41, bạn nên kết hợp áo thun boxy oversize với quần túi hộp ống rộng (cargo pants) và đôi giày da lộn đế bằng để vừa ngầu vừa an toàn khi tiếp đất."
+        suggestedItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/OutfitItem'
+        totalSetPrice:
+          type: number
+          example: 1450000
+
+    OutfitItem:
+      type: object
+      properties:
+        productId:
+          type: integer
+          example: 12
+        productName:
+          type: string
+          example: Giày Skateboard Pro Classic Suede
+        itemType:
+          type: string
+          enum: [SHOES, TOP, BOTTOM, ACCESSORY, SKATEBOARD]
+          example: SHOES
+        suggestedSize:
+          type: string
+          example: "41"
+        price:
+          type: number
+          example: 650000
+        imageUrl:
+          type: string
+          example: https://storage.aifashion.vn/products/shoes-01.jpg
+
+    # --- Chatbot Schemas ---
+    ChatSessionResponse:
+      type: object
+      properties:
+        sessionId:
+          type: integer
+          example: 105
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-11-24T23:00:00Z"
+
+    SendMessageRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          example: "Mình mới tập trượt ván thì nên chọn loại giày nào để không bị đau chân?"
+
+    ChatMessageResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 501
+        sender:
+          type: string
+          enum: [USER, AI_ASSISTANT]
+          example: AI_ASSISTANT
+        content:
+          type: string
+          example: "Chào bạn! Khi mới tập trượt, bạn nên ưu tiên giày có đế cao su lưu hóa (vulcanized) và phần cổ giày có đệm mút lót êm như mẫu Giày Skateboard Pro Classic Suede đang có sẵn tại shop..."
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-11-24T23:00:05Z"
+
+    # --- Cart Schemas ---
+    CartResponse:
+      type: object
+      properties:
+        cartId:
+          type: integer
+          example: 1
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItemResponse'
+        totalPrice:
+          type: number
+          example: 1300000
+        totalItemsCount:
+          type: integer
+          example: 2
+
+    CartItemResponse:
+      type: object
+      properties:
+        itemId:
+          type: integer
+          example: 21
+        productId:
+          type: integer
+          example: 12
+        productName:
+          type: string
+          example: Giày Skateboard Pro Classic Suede
+        size:
+          type: string
+          example: "41"
+        productSizeId:
+          type: integer
+          example: 101
+        unitPrice:
+          type: number
+          example: 650000
+        quantity:
+          type: integer
+          example: 2
+        subTotal:
+          type: number
+          example: 1300000
+        imageUrl:
+          type: string
+          example: https://storage.aifashion.vn/products/shoes-01.jpg
+
+    AddToCartRequest:
+      type: object
+      required:
+        - productSizeId
+        - quantity
+      properties:
+        productSizeId:
+          type: integer
+          description: ID của biến thể size sản phẩm
+          example: 101
+        quantity:
+          type: integer
+          minimum: 1
+          example: 1
+
+    UpdateCartItemRequest:
+      type: object
+      required:
+        - quantity
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+          example: 2
+
+    # --- Order Schemas ---
+    CreateOrderRequest:
+      type: object
+      required:
+        - shippingAddress
+        - phoneNumber
+        - recipientName
+      properties:
+        recipientName:
+          type: string
+          example: Nguyễn Văn A
+        phoneNumber:
+          type: string
+          example: "0912345678"
+        shippingAddress:
+          type: string
+          example: "Số 123 Đường Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh"
+        note:
+          type: string
+          example: "Giao hàng giờ hành chính giúp mình nhé"
+        paymentMethod:
+          type: string
+          enum: [COD, BANK_TRANSFER]
+          default: COD
+          example: COD
+
+    OrderResponse:
+      type: object
+      properties:
+        orderId:
+          type: integer
+          example: 88
+        orderCode:
+          type: string
+          example: "ORD-20261124-0088"
+        status:
+          type: string
+          enum: [PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED]
+          example: PENDING
+        totalAmount:
+          type: number
+          example: 1300000
+        shippingAddress:
+          type: string
+          example: "Số 123 Đường Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh"
+        phoneNumber:
+          type: string
+          example: "0912345678"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-11-24T23:00:10Z"
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemResponse'
+
+    OrderItemResponse:
+      type: object
+      properties:
+        productName:
+          type: string
+          example: Giày Skateboard Pro Classic Suede
+        size:
+          type: string
+          example: "41"
+        quantity:
+          type: integer
+          example: 2
+        price:
+          type: number
+          example: 650000
