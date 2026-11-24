@@ -31,6 +31,10 @@ public class ProductSize {
 
     private Integer size;
 
+    @Min(value = 0, message = "Số lượng tồn kho của size phải lớn hơn hoặc bằng 0")
+    @Column(name = "quantity")
+    private Integer quantity;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     private Product product;

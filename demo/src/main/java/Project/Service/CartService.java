@@ -18,6 +18,7 @@ import Project.Model.DTO.Response.CartItemResponseDTO;
 import Project.Model.DTO.Response.CartResponseDTO;
 import Project.Model.DTO.Response.CategoryDTO;
 import Project.Model.DTO.Response.ProductResponseDTO;
+import Project.Model.DTO.Response.ProductSizeResponseDTO;
 import Project.Repository.CartItemRepository;
 import Project.Repository.CartRepository;
 import Project.Repository.ProductRepository;
@@ -50,15 +51,22 @@ public class CartService {
         productResponseDTO.setCategory(categoryDTO);
 
         List<Integer> sizes = new ArrayList<>();
+        List<ProductSizeResponseDTO> sizeDetails = new ArrayList<>();
 
         if (product.getSizes() != null) {
             for (ProductSize productSize : product.getSizes()) {
                 Integer size = productSize.getSize();
                 sizes.add(size);
+                sizeDetails.add(new ProductSizeResponseDTO(
+                    productSize.getId(),
+                    productSize.getSize(),
+                    productSize.getQuantity() != null ? productSize.getQuantity() : 0
+                ));
             }
         }
 
         productResponseDTO.setSizes(sizes);
+        productResponseDTO.setSizeDetails(sizeDetails);
         return productResponseDTO;
     }
 
@@ -104,13 +112,6 @@ public class CartService {
             );
         }
 
-        // Kiểm tra tồn kho
-        if (product.getQuantity() < quantity) {
-            throw new IllegalArgumentException(
-                    "Khong du so luong san pham trong kho"
-            );
-        }
-
         Integer selectedSize = cartItemRequestDTO.getSize();
 
         if (selectedSize == null) {
@@ -118,23 +119,38 @@ public class CartService {
         }
 
         boolean validSize = false;
+        ProductSize matchedProductSize = null;
 
         List<ProductSize> productSizes = product.getSizes();
 
-        for (int i = 0; i < productSizes.size(); i++) {
+        if (productSizes != null) {
+            for (int i = 0; i < productSizes.size(); i++) {
+                ProductSize productSize = productSizes.get(i);
+                Integer size = productSize.getSize();
 
-            ProductSize productSize = productSizes.get(i);
-
-            Integer size = productSize.getSize();
-
-            if (size.equals(selectedSize)) {
-                validSize = true;
-                break;
+                if (size.equals(selectedSize)) {
+                    validSize = true;
+                    matchedProductSize = productSize;
+                    break;
+                }
             }
         }
 
         if (validSize == false) {
             throw new IllegalArgumentException("Size không hợp lệ");
+        }
+
+        // Kiểm tra tồn kho của riêng size này (nếu có set quantity cho size) hoặc tồn kho chung
+        if (matchedProductSize != null && matchedProductSize.getQuantity() != null) {
+            if (matchedProductSize.getQuantity() < quantity) {
+                throw new IllegalArgumentException(
+                        "Số lượng tồn kho cho size " + selectedSize + " không đủ (chỉ còn " + matchedProductSize.getQuantity() + ")"
+                );
+            }
+        } else if (product.getQuantity() < quantity) {
+            throw new IllegalArgumentException(
+                    "Khong du so luong san pham trong kho"
+            );
         }
 
         Cart cart = user.getCart();
@@ -184,6 +200,9 @@ public class CartService {
         }
 
         // Trừ số lượng trong kho
+        if (matchedProductSize != null && matchedProductSize.getQuantity() != null) {
+            matchedProductSize.setQuantity(matchedProductSize.getQuantity() - quantity);
+        }
         product.setQuantity(
                 product.getQuantity() - quantity
         );
@@ -220,18 +239,38 @@ public class CartService {
             );
 
         Product product = cartItem.getProduct();
+        ProductSize matchedProductSize = null;
+        if (product.getSizes() != null && cartItem.getSize() != null) {
+            for (ProductSize ps : product.getSizes()) {
+                if (cartItem.getSize().equals(ps.getSize())) {
+                    matchedProductSize = ps;
+                    break;
+                }
+            }
+        }
 
         int oldQuantity = cartItem.getQuantity();
         int difference = newQuantity - oldQuantity;
 
         // Nếu tăng số lượng thì kiểm tra tồn kho
-        if (difference > 0 && product.getQuantity() < difference) {
-            throw new IllegalArgumentException(
-                "Số lượng tồn kho không đủ"
-            );
+        if (difference > 0) {
+            if (matchedProductSize != null && matchedProductSize.getQuantity() != null) {
+                if (matchedProductSize.getQuantity() < difference) {
+                    throw new IllegalArgumentException(
+                        "Số lượng tồn kho cho size " + cartItem.getSize() + " không đủ (chỉ còn " + matchedProductSize.getQuantity() + ")"
+                    );
+                }
+            } else if (product.getQuantity() < difference) {
+                throw new IllegalArgumentException(
+                    "Số lượng tồn kho không đủ"
+                );
+            }
         }
 
         // Điều chỉnh tồn kho
+        if (matchedProductSize != null && matchedProductSize.getQuantity() != null) {
+            matchedProductSize.setQuantity(matchedProductSize.getQuantity() - difference);
+        }
         product.setQuantity(product.getQuantity() - difference);
 
         // Cập nhật CartItem
@@ -287,6 +326,16 @@ public class CartService {
             throw new ResourceNotFoundException("Khong tim thay cart item");
         }
         Product product = cartItem.getProduct();
+        if (product.getSizes() != null && cartItem.getSize() != null) {
+            for (ProductSize ps : product.getSizes()) {
+                if (cartItem.getSize().equals(ps.getSize())) {
+                    if (ps.getQuantity() != null) {
+                        ps.setQuantity(ps.getQuantity() + cartItem.getQuantity());
+                    }
+                    break;
+                }
+            }
+        }
         product.setQuantity(product.getQuantity() + cartItem.getQuantity());
         this.productRepository.save(product);
 

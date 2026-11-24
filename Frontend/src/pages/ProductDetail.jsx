@@ -42,10 +42,16 @@ export default function ProductDetail() {
     }
   }, [id]);
 
+  const selectedSizeInfo = product?.sizeDetails?.find((s) => s.size === selectedSize);
+  const currentSizeStock = selectedSizeInfo && selectedSizeInfo.quantity !== undefined
+    ? selectedSizeInfo.quantity
+    : product?.quantity;
+  const maxStock = currentSizeStock !== undefined ? currentSizeStock : (product?.quantity || 99);
+
   const handleQuantityChange = (type) => {
     if (type === 'decrease' && quantity > 1) {
       setQuantity((prev) => prev - 1);
-    } else if (type === 'increase' && quantity < (product?.quantity || 99)) {
+    } else if (type === 'increase' && quantity < maxStock) {
       setQuantity((prev) => prev + 1);
     }
   };
@@ -145,13 +151,13 @@ export default function ProductDetail() {
           {/* Tình trạng kho */}
           <div className="flex items-center gap-2 text-sm">
             <span className="text-gray-500">Tình trạng:</span>
-            {product.quantity > 0 ? (
-              <span className="text-green-600 font-semibold bg-green-50 px-2 py-0.5 rounded-full text-xs">
-                Còn hàng ({product.quantity} sản phẩm)
+            {currentSizeStock > 0 ? (
+              <span className="text-green-600 font-semibold bg-green-50 px-2.5 py-0.5 rounded-full text-xs">
+                Còn hàng ({currentSizeStock} sản phẩm cho Size {selectedSize})
               </span>
             ) : (
-              <span className="text-red-600 font-semibold bg-red-50 px-2 py-0.5 rounded-full text-xs">
-                Hết hàng
+              <span className="text-red-600 font-semibold bg-red-50 px-2.5 py-0.5 rounded-full text-xs">
+                {selectedSize ? `Hết hàng (Size ${selectedSize})` : 'Hết hàng'}
               </span>
             )}
           </div>
@@ -173,21 +179,27 @@ export default function ProductDetail() {
             <div className="grid grid-cols-5 gap-2.5 sm:gap-3">
               {availableSizes.map((size) => {
                 const isSelected = selectedSize === size;
+                const sizeInfo = product?.sizeDetails?.find((s) => s.size === size);
+                const isOutOfStock = sizeInfo && sizeInfo.quantity === 0;
                 return (
                   <button
                     key={size}
                     type="button"
+                    disabled={isOutOfStock}
                     onClick={() => {
                       setSelectedSize(size);
+                      setQuantity(1);
                       if (message?.type === 'error') setMessage(null);
                     }}
-                    className={`h-12 rounded-xl font-bold text-sm sm:text-base transition-all duration-200 flex items-center justify-center border-2 ${
-                      isSelected
+                    className={`h-12 rounded-xl font-bold text-sm sm:text-base transition-all duration-200 flex flex-col items-center justify-center border-2 ${
+                      isOutOfStock
+                        ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60 line-through'
+                        : isSelected
                         ? 'bg-black text-white border-black shadow-md scale-[1.02]'
                         : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50'
                     }`}
                   >
-                    {size}
+                    <span>{size}</span>
                   </button>
                 );
               })}
@@ -203,7 +215,7 @@ export default function ProductDetail() {
             <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm">
               <button
                 onClick={() => handleQuantityChange('decrease')}
-                className="px-3.5 py-1.5 hover:bg-gray-100 text-gray-600 font-medium transition"
+                className="px-3.5 py-1.5 hover:bg-gray-100 text-gray-600 font-medium transition disabled:opacity-50"
                 disabled={quantity <= 1}
               >
                 -
@@ -213,8 +225,8 @@ export default function ProductDetail() {
               </span>
               <button
                 onClick={() => handleQuantityChange('increase')}
-                className="px-3.5 py-1.5 hover:bg-gray-100 text-gray-600 font-medium transition"
-                disabled={quantity >= product.quantity}
+                className="px-3.5 py-1.5 hover:bg-gray-100 text-gray-600 font-medium transition disabled:opacity-50"
+                disabled={quantity >= maxStock}
               >
                 +
               </button>
@@ -224,10 +236,10 @@ export default function ProductDetail() {
           {/* Nút Thêm vào giỏ */}
           <button
             onClick={handleAddToCart}
-            disabled={adding || product.quantity <= 0}
+            disabled={adding || currentSizeStock <= 0}
             className="w-full bg-black text-white py-4 rounded-xl font-bold hover:bg-gray-800 transition duration-200 shadow-md hover:shadow-lg disabled:opacity-50"
           >
-            {adding ? 'Đang thêm...' : product.quantity <= 0 ? 'Sản phẩm đã hết hàng' : 'Thêm Vào Giỏ Hàng'}
+            {adding ? 'Đang thêm...' : currentSizeStock <= 0 ? `Size ${selectedSize} tạm hết hàng` : 'Thêm Vào Giỏ Hàng'}
           </button>
 
           {/* Banner gợi ý hỏi AI */}

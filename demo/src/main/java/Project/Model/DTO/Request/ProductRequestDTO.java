@@ -41,4 +41,6 @@ public class ProductRequestDTO {
     private String image;
 
     private List<Integer> sizes;
+
+    private List<ProductSizeRequestDTO> sizeDetails;
 }

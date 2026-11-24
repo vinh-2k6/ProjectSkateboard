@@ -29,4 +29,6 @@ public class ProductResponseDTO {
     private CategoryDTO category;
 
     private List<Integer> sizes;
+
+    private List<ProductSizeResponseDTO> sizeDetails;
 }

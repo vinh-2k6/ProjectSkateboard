@@ -14,6 +14,7 @@ import Project.Exception.ResourceNotFoundException;
 import Project.Model.Entity.Order;
 import Project.Model.Entity.OrderItem;
 import Project.Model.Entity.Product;
+import Project.Model.Entity.ProductSize;
 import Project.Model.Entity.User;
 import Project.Model.DTO.Request.CreateOrderItemDTO;
 import Project.Model.DTO.Request.OrderItemRequestDTO;
@@ -81,14 +82,22 @@ public class OrderService {
                     .orElseThrow(() ->
                             new ResourceNotFoundException("Khong co product"));
 
-            boolean sizeExists = product.getSizes()
-                        .stream()
-                        .anyMatch(productSize ->
-                                productSize.getSize() == itemRequest.getSize()
-                        );
+            ProductSize matchedSize = null;
+            if (product.getSizes() != null) {
+                for (ProductSize ps : product.getSizes()) {
+                    if (ps.getSize() == itemRequest.getSize()) {
+                        matchedSize = ps;
+                        break;
+                    }
+                }
+            }
 
-            if (!sizeExists) {
+            if (matchedSize == null) {
                 throw new ResourceNotFoundException("Size khong ton tai");
+            }
+
+            if (matchedSize.getQuantity() != null && matchedSize.getQuantity() < itemRequest.getQuantity()) {
+                throw new IllegalArgumentException("Số lượng tồn kho cho size " + itemRequest.getSize() + " không đủ");
             }
 
             orderItem.setProduct(product);
@@ -190,15 +199,23 @@ public class OrderService {
                     .orElseThrow(() ->
                             new ResourceNotFoundException("Khong co product"));
 
-            boolean sizeExists = product.getSizes()
-                    .stream()
-                    .anyMatch(productSize ->
-                            productSize.getSize() == itemRequest.getSize()
-                    );
+            ProductSize matchedSize = null;
+            if (product.getSizes() != null) {
+                for (ProductSize ps : product.getSizes()) {
+                    if (ps.getSize() == itemRequest.getSize()) {
+                        matchedSize = ps;
+                        break;
+                    }
+                }
+            }
 
-            if (!sizeExists) {
+            if (matchedSize == null) {
                 throw new ResourceNotFoundException("Size khong ton tai");
-        }
+            }
+
+            if (matchedSize.getQuantity() != null && matchedSize.getQuantity() < itemRequest.getQuantity()) {
+                throw new IllegalArgumentException("Số lượng tồn kho cho size " + itemRequest.getSize() + " không đủ");
+            }
 
             OrderItem orderItem = new OrderItem();
 

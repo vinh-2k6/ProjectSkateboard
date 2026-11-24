@@ -18,7 +18,9 @@ import Project.Model.Entity.ProductSize;
 import Project.Model.DTO.Response.BrandDTO;
 import Project.Model.DTO.Response.CategoryDTO;
 import Project.Model.DTO.Request.ProductRequestDTO;
+import Project.Model.DTO.Request.ProductSizeRequestDTO;
 import Project.Model.DTO.Response.ProductResponseDTO;
+import Project.Model.DTO.Response.ProductSizeResponseDTO;
 import Project.Model.DTO.Response.UserResponseDTO;
 import Project.Repository.BrandRepository;
 import Project.Repository.CategoryRepository;
@@ -50,15 +52,22 @@ public class ProductService {
         productResponseDTO.setCategory(categoryDTO);
 
         List<Integer> sizes = new ArrayList<>();
+        List<ProductSizeResponseDTO> sizeDetails = new ArrayList<>();
 
         if (product.getSizes() != null) {
             for (ProductSize productSize : product.getSizes()) {
                 Integer size = productSize.getSize();
                 sizes.add(size);
+                sizeDetails.add(new ProductSizeResponseDTO(
+                    productSize.getId(),
+                    productSize.getSize(),
+                    productSize.getQuantity() != null ? productSize.getQuantity() : 0
+                ));
             }
         }
 
         productResponseDTO.setSizes(sizes);
+        productResponseDTO.setSizeDetails(sizeDetails);
         return productResponseDTO;
     }
 
@@ -81,15 +90,22 @@ public class ProductService {
 
         List<ProductSize> sizes = new ArrayList<>();
 
-        for (Integer size : productRequestDTO.getSizes()) {
-
-            ProductSize productSize = new ProductSize();
-
-            productSize.setSize(size);
-
-            productSize.setProduct(product);
-
-            sizes.add(productSize);
+        if (productRequestDTO.getSizeDetails() != null && !productRequestDTO.getSizeDetails().isEmpty()) {
+            for (ProductSizeRequestDTO sizeDTO : productRequestDTO.getSizeDetails()) {
+                ProductSize productSize = new ProductSize();
+                productSize.setSize(sizeDTO.getSize());
+                productSize.setQuantity(sizeDTO.getQuantity() != null ? sizeDTO.getQuantity() : 0);
+                productSize.setProduct(product);
+                sizes.add(productSize);
+            }
+        } else if (productRequestDTO.getSizes() != null) {
+            for (Integer size : productRequestDTO.getSizes()) {
+                ProductSize productSize = new ProductSize();
+                productSize.setSize(size);
+                productSize.setQuantity(0);
+                productSize.setProduct(product);
+                sizes.add(productSize);
+            }
         }
 
         product.setSizes(sizes);
@@ -174,6 +190,35 @@ public class ProductService {
                             .orElseThrow(() -> new ResourceNotFoundException("Khong co category"));
         
         productInDB.setCategory(category);
+
+        if (updateProduct.getSizeDetails() != null && !updateProduct.getSizeDetails().isEmpty()) {
+            if (productInDB.getSizes() != null) {
+                productInDB.getSizes().clear();
+            } else {
+                productInDB.setSizes(new ArrayList<>());
+            }
+            for (ProductSizeRequestDTO sizeDTO : updateProduct.getSizeDetails()) {
+                ProductSize productSize = new ProductSize();
+                productSize.setSize(sizeDTO.getSize());
+                productSize.setQuantity(sizeDTO.getQuantity() != null ? sizeDTO.getQuantity() : 0);
+                productSize.setProduct(productInDB);
+                productInDB.getSizes().add(productSize);
+            }
+        } else if (updateProduct.getSizes() != null) {
+            if (productInDB.getSizes() != null) {
+                productInDB.getSizes().clear();
+            } else {
+                productInDB.setSizes(new ArrayList<>());
+            }
+            for (Integer size : updateProduct.getSizes()) {
+                ProductSize productSize = new ProductSize();
+                productSize.setSize(size);
+                productSize.setQuantity(0);
+                productSize.setProduct(productInDB);
+                productInDB.getSizes().add(productSize);
+            }
+        }
+
         this.productRepository.save(productInDB);
         return convertProductToDTO(productInDB);
     }
