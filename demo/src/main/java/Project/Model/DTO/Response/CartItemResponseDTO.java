@@ -19,6 +19,8 @@ public class CartItemResponseDTO {
 
     private int quantity;
 
+    private int size;
+
     private int price;
 
 }

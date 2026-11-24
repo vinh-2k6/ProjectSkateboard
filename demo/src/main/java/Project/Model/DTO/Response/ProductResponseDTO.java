@@ -27,4 +27,6 @@ public class ProductResponseDTO {
     private BrandDTO brand;
     
     private CategoryDTO category;
+
+    private List<Integer> sizes;
 }

@@ -39,14 +39,14 @@ public class CartController {
         return ApiResponse.success(cartResponseDTO);
     }
 
-    @PutMapping("/users/{userId}/cart/items/{productId}")
+    @PutMapping("/users/{userId}/cart/items/{cartItemId}")
     public ResponseEntity<ApiResponse<CartResponseDTO>> updateCartItemQuantity(
             @PathVariable int userId,
-            @PathVariable int productId,
+            @PathVariable int cartItemId,
             @RequestParam int newQuantity) {
 
         CartResponseDTO cartResponseDTO = 
-                this.cartService.updateCartItemQuantity(userId, productId, newQuantity);
+                this.cartService.updateCartItemQuantity(userId, cartItemId, newQuantity);
 
         return ApiResponse.success(cartResponseDTO);
     }

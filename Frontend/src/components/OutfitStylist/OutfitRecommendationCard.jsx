@@ -82,9 +82,14 @@ const OutfitRecommendationCard = ({ outfit }) => {
                     <div className="flex-1 min-w-0">
                         <span className="text-[10px] text-gray-400 block uppercase tracking-wider">Đôi giày chủ đạo</span>
                         <span className="font-bold text-white text-xs truncate block">{outfit.shoe.name}</span>
-                        <span className="text-amber-400 font-extrabold text-[11px]">
-                            {outfit.shoe.price?.toLocaleString()} ₫
-                        </span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-amber-400 font-extrabold text-[11px]">
+                                {outfit.shoe.price?.toLocaleString()} ₫
+                            </span>
+                            <span className="text-[10px] text-gray-400 font-medium">
+                                (Size 39 - 43)
+                            </span>
+                        </div>
                     </div>
                     <Link 
                         to={`/products/${outfit.shoe.id}`}

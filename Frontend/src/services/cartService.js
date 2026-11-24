@@ -2,10 +2,11 @@ import api from './api';
 
 export const cartService = {
   // POST /users/{userId}/cart/items
-  addToCart: async (userId, productId, quantity) => {
+  addToCart: async (userId, productId, quantity, size = 39) => {
     const payload = {
       productId: Number(productId),
-      quantity: Number(quantity)
+      quantity: Number(quantity),
+      size: Number(size)
     };
 
     const response = await api.post(
@@ -25,10 +26,10 @@ export const cartService = {
     return response.data?.data || response.data;
   },
 
-  // PUT /users/{userId}/cart/items/{productId}?newQuantity=2
-  updateCartItem: async (userId, productId, newQuantity) => {
+  // PUT /users/{userId}/cart/items/{cartItemId}?newQuantity=2
+  updateCartItem: async (userId, cartItemId, newQuantity) => {
     const response = await api.put(
-      `/users/${userId}/cart/items/${productId}`,
+      `/users/${userId}/cart/items/${cartItemId}`,
       null,
       {
         params: {

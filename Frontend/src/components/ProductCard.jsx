@@ -11,6 +11,10 @@ function ProductCard({ product }) {
         return path.startsWith("/") ? path : `/${path}`;
     };
 
+    const availableSizes = product?.sizes && product.sizes.length > 0 
+        ? product.sizes 
+        : [39, 40, 41, 42, 43];
+
     return (
         <div className="product-card">
             <div className="product-image">
@@ -28,6 +32,16 @@ function ProductCard({ product }) {
                 <p className="product-brand">{product?.brand?.name}</p>
                 <h3>{product?.name}</h3>
                 <p className="product-description">{product?.description}</p>
+                
+                <div className="product-sizes">
+                    <span className="size-label">Size:</span>
+                    <div className="size-chips">
+                        {availableSizes.map((s) => (
+                            <span key={s} className="size-chip">{s}</span>
+                        ))}
+                    </div>
+                </div>
+
                 <div className="product-bottom">
                     <span className="product-price">
                         {product?.price?.toLocaleString("vi-VN")} ₫

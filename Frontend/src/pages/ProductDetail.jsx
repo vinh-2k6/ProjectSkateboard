@@ -13,6 +13,7 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const [selectedSize, setSelectedSize] = useState(39);
   const [adding, setAdding] = useState(false);
   const [message, setMessage] = useState(null);
 
@@ -26,6 +27,9 @@ export default function ProductDetail() {
         // API trả về dạng ApiResponse { message, data: { ... } }
         const data = response.data?.data || response.data;
         setProduct(data);
+        if (data?.sizes && data.sizes.length > 0) {
+          setSelectedSize(data.sizes[0]);
+        }
       } catch (error) {
         console.error("Lỗi khi tải chi tiết sản phẩm:", error);
       } finally {
@@ -49,19 +53,25 @@ export default function ProductDetail() {
   const handleAddToCart = async () => {
     if (!product) return;
 
+    if (!selectedSize) {
+      setMessage({ type: 'error', text: 'Vui lòng chọn kích thước giày!' });
+      return;
+    }
+
     const targetProductId = product.id || id;
 
     try {
       setAdding(true);
       setMessage(null);
 
-      // Gọi cartService thêm vào giỏ hàng
-      await cartService.addToCart(userId, targetProductId, quantity);
+      // Gọi cartService thêm vào giỏ hàng kèm kích thước giày
+      await cartService.addToCart(userId, targetProductId, quantity, selectedSize);
 
-      setMessage({ type: 'success', text: 'Đã thêm sản phẩm vào giỏ hàng!' });
+      setMessage({ type: 'success', text: `Đã thêm sản phẩm (Size ${selectedSize}, SL: ${quantity}) vào giỏ hàng!` });
     } catch (error) {
       console.error('Lỗi thêm sản phẩm:', error);
-      setMessage({ type: 'error', text: 'Thêm vào giỏ hàng thất bại. Vui lòng thử lại!' });
+      const errorMsg = error.response?.data?.message || 'Thêm vào giỏ hàng thất bại. Vui lòng thử lại!';
+      setMessage({ type: 'error', text: errorMsg });
     } finally {
       setAdding(false);
     }
@@ -83,6 +93,7 @@ export default function ProductDetail() {
   }
 
   const imageUrl = product.image || product.imageUrl || DEFAULT_IMAGE;
+  const availableSizes = (product?.sizes && product.sizes.length > 0) ? product.sizes : [39, 40, 41, 42, 43];
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -143,6 +154,47 @@ export default function ProductDetail() {
                 Hết hàng
               </span>
             )}
+          </div>
+
+          {/* Chọn kích thước giày (Size) */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold text-gray-800">
+                Kích thước (EU):{' '}
+                <span className="text-blue-600 font-extrabold text-base ml-1">
+                  {selectedSize ? `Size ${selectedSize}` : 'Chưa chọn'}
+                </span>
+              </span>
+              <span className="text-xs text-gray-500 font-medium">
+                Kích thước chuẩn (39 - 43)
+              </span>
+            </div>
+
+            <div className="grid grid-cols-5 gap-2.5 sm:gap-3">
+              {availableSizes.map((size) => {
+                const isSelected = selectedSize === size;
+                return (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => {
+                      setSelectedSize(size);
+                      if (message?.type === 'error') setMessage(null);
+                    }}
+                    className={`h-12 rounded-xl font-bold text-sm sm:text-base transition-all duration-200 flex items-center justify-center border-2 ${
+                      isSelected
+                        ? 'bg-black text-white border-black shadow-md scale-[1.02]'
+                        : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[12px] text-gray-500 italic">
+              * Tất cả các đôi giày đều có sẵn các kích cỡ từ 39 đến 43.
+            </p>
           </div>
 
           {/* Chọn số lượng */}

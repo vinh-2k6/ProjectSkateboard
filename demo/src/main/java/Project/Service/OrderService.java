@@ -38,6 +38,7 @@ public class OrderService {
                 .id(orderItem.getId())
                 .product_Id(orderItem.getProduct().getId())
                 .product_Name(orderItem.getProduct().getName())
+                .size(orderItem.getSize())
                 .quantity(orderItem.getQuantity())
                 .price(orderItem.getPrice())
                 .build();
@@ -64,7 +65,7 @@ public class OrderService {
 
         Order order = new Order();
 
-        order.setStatus("PENGDING");
+        order.setStatus("PENDING");
         order.setCreatedAt(Instant.now());
 
         int totalPrice = 0;
@@ -80,9 +81,20 @@ public class OrderService {
                     .orElseThrow(() ->
                             new ResourceNotFoundException("Khong co product"));
 
+            boolean sizeExists = product.getSizes()
+                        .stream()
+                        .anyMatch(productSize ->
+                                productSize.getSize() == itemRequest.getSize()
+                        );
+
+            if (!sizeExists) {
+                throw new ResourceNotFoundException("Size khong ton tai");
+            }
+
             orderItem.setProduct(product);
             orderItem.setPrice(product.getPrice());
             orderItem.setQuantity(itemRequest.getQuantity());
+            orderItem.setSize(itemRequest.getSize());
             orderItem.setOrder(order);
 
             totalPrice += orderItem.getPrice() * orderItem.getQuantity();
@@ -178,11 +190,22 @@ public class OrderService {
                     .orElseThrow(() ->
                             new ResourceNotFoundException("Khong co product"));
 
+            boolean sizeExists = product.getSizes()
+                    .stream()
+                    .anyMatch(productSize ->
+                            productSize.getSize() == itemRequest.getSize()
+                    );
+
+            if (!sizeExists) {
+                throw new ResourceNotFoundException("Size khong ton tai");
+        }
+
             OrderItem orderItem = new OrderItem();
 
             orderItem.setProduct(product);
             orderItem.setPrice(product.getPrice());
             orderItem.setQuantity(itemRequest.getQuantity());
+            orderItem.setSize(itemRequest.getSize());
 
             // Thiết lập quan hệ OrderItem -> Order
             orderItem.setOrder(order);

@@ -46,6 +46,7 @@ export default function Checkout() {
 
         return {
           product_Id: Number(productId),
+          size: Number(item.size || 39),
           quantity: Number(item.quantity)
         };
       });
@@ -86,7 +87,12 @@ export default function Checkout() {
                 <div key={item.id} className="flex justify-between items-center text-sm border-b pb-2">
                   <div>
                     <p className="font-semibold">{product.name || 'Sản phẩm'}</p>
-                    <p className="text-gray-500">SL: {item.quantity}</p>
+                    <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
+                      <span className="bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded font-semibold">
+                        Size {item.size || 39}
+                      </span>
+                      <span>SL: {item.quantity}</span>
+                    </div>
                   </div>
                   <p className="font-medium">{item.price?.toLocaleString('vi-VN')} ₫</p>
                 </div>

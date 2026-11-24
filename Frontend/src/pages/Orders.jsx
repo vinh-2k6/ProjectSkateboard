@@ -156,7 +156,12 @@ export default function Orders() {
                   <div key={item.id} className="py-3 flex justify-between items-center text-sm">
                     <div>
                       <p className="font-bold text-gray-800">{item.product_Name}</p>
-                      <p className="text-gray-500 text-xs">Số lượng: {item.quantity}</p>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                          Size {item.size || 39}
+                        </span>
+                        <span>Số lượng: {item.quantity}</span>
+                      </div>
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-gray-900">

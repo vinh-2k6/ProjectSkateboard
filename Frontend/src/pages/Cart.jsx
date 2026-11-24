@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { cartService } from '../services/cartService';
+
+const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1542291026-7eec264c27ff";
 
 // Hàm chuẩn hóa đường dẫn lấy thẳng từ thư mục public/images
 const getProductImageUrl = (product) => {
@@ -24,14 +26,14 @@ const getProductImageUrl = (product) => {
 
   // 3. Nếu chỉ có tên file (vd: "nike-air-max-90.jpg" hoặc "nike-pegasus-41.jpg")
   const fileName = typeof rawImage === 'object' ? (rawImage.url || rawImage.name || '') : rawImage;
-  const cleanFileName = fileName.replace(/^\/?(images\/)?/, '');
+  const cleanFileName = String(fileName).replace(/^\/?(images\/)?/, '');
 
   return `/images/${cleanFileName}`;
 };
 
 // Component hiển thị ảnh sản phẩm
 function CartProductImage({ product, itemId }) {
-  const [imgSrc, setImgSrc] = useState(() => getProductImageUrl(product));
+  const [imgSrc, setImgSrc] = useState(() => getProductImageUrl(product) || DEFAULT_IMAGE);
 
   useEffect(() => {
     // Nếu thông tin product ban đầu đã có ảnh thì dùng luôn
@@ -41,13 +43,16 @@ function CartProductImage({ product, itemId }) {
       return;
     }
 
-    // Nếu chưa có, gọi API lấy thông tin chi tiết
+    // Nếu chưa có, gọi API lấy thông tin chi tiết qua instance api (/api/v1/products/{id})
     const targetId = product?.id || itemId;
     if (targetId) {
-      axios.get(`http://localhost:8090/products/${targetId}`)
+      api.get(`/products/${targetId}`)
         .then((response) => {
           const data = response.data?.data || response.data;
-          setImgSrc(getProductImageUrl(data));
+          const url = getProductImageUrl(data);
+          if (url) {
+            setImgSrc(url);
+          }
         })
         .catch((err) => console.error(`Lỗi tải ảnh cho ID ${targetId}:`, err));
     }
@@ -55,9 +60,13 @@ function CartProductImage({ product, itemId }) {
 
   return (
     <img
-      src={imgSrc}
+      src={imgSrc || DEFAULT_IMAGE}
       alt={product?.name || "Product"}
       className="w-full h-full object-contain p-1"
+      onError={(e) => {
+        e.target.onerror = null;
+        e.target.src = DEFAULT_IMAGE;
+      }}
     />
   );
 }
@@ -90,13 +99,13 @@ export default function Cart() {
     fetchCart();
   }, []);
 
- const handleUpdateQuantity = async (cartItemId, productId, newQuantity) => {
+  const handleUpdateQuantity = async (cartItemId, newQuantity) => {
     if (newQuantity < 1) return;
     try {
       setUpdatingItemId(cartItemId);
 
       // 1. Gọi API cập nhật số lượng
-      const response = await cartService.updateCartItem(userId, productId, newQuantity);
+      const response = await cartService.updateCartItem(userId, cartItemId, newQuantity);
 
       // 2. Lấy dữ liệu CartResponseDTO từ response của Backend
       const updatedCart = response?.data || response;
@@ -173,9 +182,15 @@ export default function Cart() {
                     <h3 className="font-bold text-gray-900 line-clamp-1">
                       {product.name}
                     </h3>
-                    <p className="text-sm text-gray-500">
-                      Thương hiệu: {product.brand?.name || 'Nike'}
-                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm text-gray-500">
+                        Thương hiệu: {product.brand?.name || 'Nike'}
+                      </span>
+                      <span className="text-gray-300">•</span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                        Size {item.size || 39}
+                      </span>
+                    </div>
                     <p className="text-sm font-semibold mt-1 text-gray-700">
                       {product.price?.toLocaleString('vi-VN')} ₫
                     </p>
@@ -186,7 +201,7 @@ export default function Cart() {
                   <div className="flex items-center border rounded-md overflow-hidden bg-white">
                     <button
                       disabled={isUpdating || item.quantity <= 1}
-                      onClick={() => handleUpdateQuantity(item.id, targetProductId, item.quantity - 1)}
+                      onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
                       className="px-3 py-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-40 transition"
                     >
                       -
@@ -196,7 +211,7 @@ export default function Cart() {
                     </span>
                     <button
                       disabled={isUpdating}
-                      onClick={() => handleUpdateQuantity(item.id, targetProductId, item.quantity + 1)}
+                      onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                       className="px-3 py-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-40 transition"
                     >
                       +

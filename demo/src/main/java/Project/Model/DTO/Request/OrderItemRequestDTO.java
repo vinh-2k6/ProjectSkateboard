@@ -14,5 +14,7 @@ import lombok.Setter;
 public class OrderItemRequestDTO {
     private int product_Id;
 
+    private int size;
+
     private int quantity;
 }

@@ -18,6 +18,8 @@ public class OrderItemResponseDTO {
 
     private String product_Name;
 
+    private int size;
+
     private int quantity;
 
     private int price;

@@ -1,5 +1,6 @@
 package Project.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -13,6 +14,7 @@ import Project.Exception.ResourceNotFoundException;
 import Project.Model.Entity.Brand;
 import Project.Model.Entity.Category;
 import Project.Model.Entity.Product;
+import Project.Model.Entity.ProductSize;
 import Project.Model.DTO.Response.BrandDTO;
 import Project.Model.DTO.Response.CategoryDTO;
 import Project.Model.DTO.Request.ProductRequestDTO;
@@ -46,6 +48,17 @@ public class ProductService {
         CategoryDTO categoryDTO = new CategoryDTO(product.getCategory().getId(),
             product.getCategory().getName(), product.getCategory().getDescription());
         productResponseDTO.setCategory(categoryDTO);
+
+        List<Integer> sizes = new ArrayList<>();
+
+        if (product.getSizes() != null) {
+            for (ProductSize productSize : product.getSizes()) {
+                Integer size = productSize.getSize();
+                sizes.add(size);
+            }
+        }
+
+        productResponseDTO.setSizes(sizes);
         return productResponseDTO;
     }
 
@@ -65,6 +78,21 @@ public class ProductService {
                             .orElseThrow(() -> new ResourceNotFoundException("Khong co category"));
         
         product.setCategory(category);
+
+        List<ProductSize> sizes = new ArrayList<>();
+
+        for (Integer size : productRequestDTO.getSizes()) {
+
+            ProductSize productSize = new ProductSize();
+
+            productSize.setSize(size);
+
+            productSize.setProduct(product);
+
+            sizes.add(productSize);
+        }
+
+        product.setSizes(sizes);
         return product;
     }
 

@@ -37,5 +37,8 @@ public class CartItem {
 
     private int quantity;
 
+    private Integer size;
+
     private int price;
+    
 }

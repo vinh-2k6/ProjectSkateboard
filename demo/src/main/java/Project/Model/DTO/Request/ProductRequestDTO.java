@@ -1,5 +1,7 @@
 package Project.Model.DTO.Request;
 
+import java.util.List;
+
 import Project.Model.Entity.Brand;
 import Project.Model.Entity.Category;
 import jakarta.validation.constraints.Min;
@@ -37,4 +39,6 @@ public class ProductRequestDTO {
 
     @NotBlank(message = "image không được để trống")
     private String image;
+
+    private List<Integer> sizes;
 }
