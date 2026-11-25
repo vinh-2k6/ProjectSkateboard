@@ -68,6 +68,9 @@ public class SecurityConfig {
                         "/api/v1/auth/google",
                         "/api/v1/products",
                         "/api/v1/products/{id}",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/v3/api-docs/**",
                         "/ws/**"
                 ).permitAll()
                 .anyRequest().authenticated()
@@ -111,7 +114,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:5000","http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of("http://localhost:5000","http://localhost:5173", "https://editor.swagger.io"));
         configuration.setAllowedMethods(List.of(
             "GET",
             "POST",
