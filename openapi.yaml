@@ -65,6 +65,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /auth/login:
     post:
@@ -85,8 +87,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /auth/google:
     post:
@@ -108,8 +114,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /auth/refresh-token:
     post:
@@ -130,8 +140,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   # ==========================================
   # PRODUCT ENDPOINTS
@@ -183,6 +197,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductPageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /products/{id}:
     get:
@@ -204,8 +222,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductDetailResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
         '404':
           $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /products/{id}/sizes:
     get:
@@ -228,8 +250,12 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ProductSizeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
         '404':
           $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   # ==========================================
   # MARKETPLACE COMPARISON & AI ENDPOINTS
@@ -254,6 +280,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MarketComparisonResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
         '404':
           $ref: '#/components/responses/NotFoundError'
         '500':
@@ -280,6 +308,10 @@ paths:
                 $ref: '#/components/schemas/MarketComparisonResponse'
         '400':
           $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   # ==========================================
   # AI STYLIST & CHAT ENDPOINTS
@@ -306,6 +338,8 @@ paths:
                 $ref: '#/components/schemas/OutfitRecommendationResponse'
         '400':
           $ref: '#/components/responses/BadRequestError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /chat/sessions:
     post:
@@ -322,6 +356,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ChatSessionResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /chat/sessions/{sessionId}/messages:
     get:
@@ -346,6 +384,16 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ChatMessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     post:
       tags:
         - AI Stylist & Chat
@@ -374,6 +422,14 @@ paths:
                 $ref: '#/components/schemas/ChatMessageResponse'
         '400':
           $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   # ==========================================
   # CART ENDPOINTS
@@ -395,6 +451,8 @@ paths:
                 $ref: '#/components/schemas/CartResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /cart/items:
     post:
@@ -421,6 +479,10 @@ paths:
           $ref: '#/components/responses/BadRequestError'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /cart/items/{itemId}:
     put:
@@ -451,6 +513,14 @@ paths:
                 $ref: '#/components/schemas/CartResponse'
         '400':
           $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     delete:
       tags:
         - Cart
@@ -467,8 +537,16 @@ paths:
       responses:
         '204':
           description: Đã xóa thành công khỏi giỏ hàng
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
         '404':
           $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   # ==========================================
   # ORDER ENDPOINTS
@@ -492,6 +570,8 @@ paths:
                   $ref: '#/components/schemas/OrderResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     post:
       tags:
         - Orders
@@ -516,6 +596,8 @@ paths:
           $ref: '#/components/responses/BadRequestError'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /orders/{id}:
     get:
@@ -538,8 +620,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OrderResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
         '404':
           $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
 # ==========================================
 # COMPONENTS & SCHEMAS
@@ -554,7 +644,7 @@ components:
 
   responses:
     BadRequestError:
-      description: Dữ liệu gửi lên không hợp lệ
+      description: Dữ liệu gửi lên không hợp lệ hoặc vi phạm điều kiện nghiệp vụ
       content:
         application/json:
           schema:
@@ -578,6 +668,19 @@ components:
             error: "UNAUTHORIZED"
             message: "JWT Token đã hết hạn hoặc không hợp lệ"
             path: "/api/v1/cart"
+
+    ForbiddenError:
+      description: Không có quyền truy cập tài nguyên này
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2026-11-24T23:00:00Z"
+            status: 403
+            error: "FORBIDDEN"
+            message: "Bạn không có quyền truy cập vào tài nguyên của người dùng khác"
+            path: "/api/v1/orders/88"
 
     NotFoundError:
       description: Không tìm thấy tài nguyên
