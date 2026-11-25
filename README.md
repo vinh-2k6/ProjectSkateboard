@@ -66,8 +66,27 @@ flowchart LR
 
 ---
 
+## 📅 5. Kế Hoạch Triển Khai Tuần 13–15 (Roadmap)
 
-## 🚀 5. Hướng Dẫn Cài Đặt & Chạy Dự Án (Getting Started)
+### TUẦN 13: Tích Hợp Dữ Liệu Sàn & Hoàn Thiện Hình Ảnh Phối Đồ
+- [x] Đã hoàn thành: Xác thực Google/Local, Giỏ hàng, Đặt hàng, WebSocket, Giao diện Chatbot tư vấn sản phẩm, Logic AI gợi ý phối đồ.
+- [ ] **Thành viên 1:** Hoàn thành việc thu thập và chuẩn hóa bộ dữ liệu mẫu từ Shopee, Tiki cho các mẫu giày/ván trượt trọng tâm; bàn giao cấu trúc dữ liệu cho Thành viên 2.
+- [ ] **Thành viên 2:** Tích hợp bộ dữ liệu sàn vào CSDL MySQL; xây dựng API `/api/v1/products/{id}/market-comparison` và prompt cho Gemini AI phân tích so sánh.
+- [ ] **Thành viên 2:** Xử lý bài toán hiển thị hình ảnh khi phối đồ: Xây dựng cơ chế trích xuất ảnh sản phẩm tương ứng trong catalog (áo, quần, phụ kiện) để hiển thị đồng bộ cùng đôi giày được gợi ý.
+
+### TUẦN 14: Hoàn Thiện Bảng So Sánh Sàn & Tối Ưu Giao Diện AI
+- [ ] **Thành viên 1:** Mở rộng tập dữ liệu cào cho các danh mục sản phẩm khác; kiểm tra và tinh chỉnh độ khớp thông tin sản phẩm giữa các sàn.
+- [ ] **Thành viên 2:** Xây dựng giao diện Bảng đối sánh giá đa sàn (hiển thị trực quan giá shop vs Shopee/Tiki kèm badge nhận xét của AI).
+- [ ] **Thành viên 2:** Cập nhật khung chat tư vấn để hiển thị carousel hình ảnh trực quan các món đồ trong set phối trang phục.
+- [ ] **Thành viên 2:** Cấu hình Redis Cache cho các kết quả so sánh AI để giảm độ trễ và tối ưu chi phí gọi API.
+
+### TUẦN 15: Kiểm Thử Toàn Diện, Tối Ưu & Đóng Gói
+- [ ] **Cả 2 thành viên:** Kiểm thử toàn bộ luồng nghiệp vụ khép kín: *Đăng nhập Google $\rightarrow$ Hỏi Chatbot tư vấn giày $\rightarrow$ Xem set phối đồ kèm ảnh trực quan $\rightarrow$ Bấm xem so sánh giá sàn $\rightarrow$ Chọn size cho vào giỏ $\rightarrow$ Đặt hàng $\rightarrow$ Nhận thông báo WebSocket*.
+- [ ] **Thành viên 1:** Viết tài liệu đánh giá độ chính xác của dữ liệu sàn và kịch bản demo.
+- [ ] **Thành viên 2:** Đóng gói hệ thống bằng Docker Compose, chuẩn bị slide thuyết trình và chạy thử nghiệm trên Swagger UI.
+
+
+## 🚀 6. Hướng Dẫn Cài Đặt & Chạy Dự Án (Getting Started)
 
 ### 1. Khởi chạy Backend (Spring Boot)
 ```bash

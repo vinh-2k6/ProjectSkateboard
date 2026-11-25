@@ -68,9 +68,6 @@ public class SecurityConfig {
                         "/api/v1/auth/google",
                         "/api/v1/products",
                         "/api/v1/products/{id}",
-                        "/swagger-ui/**",
-                        "/swagger-ui.html",
-                        "/v3/api-docs/**",
                         "/ws/**"
                 ).permitAll()
                 .anyRequest().authenticated()
