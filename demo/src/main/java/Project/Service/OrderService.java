@@ -85,7 +85,7 @@ public class OrderService {
             ProductSize matchedSize = null;
             if (product.getSizes() != null) {
                 for (ProductSize ps : product.getSizes()) {
-                    if (ps.getSize() == itemRequest.getSize()) {
+                    if(ps.getSize() == itemRequest.getSize()) {
                         matchedSize = ps;
                         break;
                     }
@@ -94,10 +94,6 @@ public class OrderService {
 
             if (matchedSize == null) {
                 throw new ResourceNotFoundException("Size khong ton tai");
-            }
-
-            if (matchedSize.getQuantity() != null && matchedSize.getQuantity() < itemRequest.getQuantity()) {
-                throw new IllegalArgumentException("Số lượng tồn kho cho size " + itemRequest.getSize() + " không đủ");
             }
 
             orderItem.setProduct(product);
@@ -115,7 +111,7 @@ public class OrderService {
         order.setOrderItems(orderItems);
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-	String email = auth.getName();
+	    String email = auth.getName();
 
         System.out.println("AUTH NAME = [" + auth.getName() + "]");
         System.out.println("PRINCIPAL = [" + auth.getPrincipal() + "]");

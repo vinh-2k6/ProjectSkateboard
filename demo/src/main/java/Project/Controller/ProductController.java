@@ -1,5 +1,6 @@
 package Project.Controller;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import java.util.Map;
@@ -60,11 +61,17 @@ public class ProductController {
     public ResponseEntity<ApiResponse<PageResponse<ProductResponseDTO>>> getProducts(
             @RequestParam(required = false) String brand,
             @RequestParam(required = false) String category,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
             Pageable pageable) {
 
         Page<ProductResponseDTO> productResponseDTOs;
 
-        if (brand != null && category != null) {
+        if (minPrice != null || maxPrice != null) {
+            productResponseDTOs = 
+                this.productService.filterProducts(brand, category, minPrice,maxPrice, pageable);
+        }
+        else if (brand != null && category != null) {
             productResponseDTOs =
                     this.productService.fetchProductWithBrandAndCategory(brand, category, pageable);
 

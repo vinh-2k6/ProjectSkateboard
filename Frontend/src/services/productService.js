@@ -1,11 +1,23 @@
 import api from "./api";
 
-export const getProducts = async (page = 1, size = 6, brand = "", category = "") => {
+export const getProducts = async (
+    page = 1,
+    size = 6,
+    brand = "",
+    category = "",
+    minPrice = null,
+    maxPrice = null
+) => {
     const params = { page, size };
 
-    // Chỉ thêm params nếu có giá trị
     if (brand) params.brand = brand;
     if (category) params.category = category;
+    if (minPrice !== null && minPrice !== "" && !Number.isNaN(Number(minPrice))) {
+        params.minPrice = Number(minPrice);
+    }
+    if (maxPrice !== null && maxPrice !== "" && !Number.isNaN(Number(maxPrice))) {
+        params.maxPrice = Number(maxPrice);
+    }
 
     const response = await api.get("/products", { params });
     return response.data;
@@ -16,7 +28,6 @@ export const getProductById = async (id) => {
     return response.data;
 };
 
-// SỬA Ở ĐÂY: Dùng instance `api` để gọi endpoint `/products/name`
 export const getProductsByName = async (name) => {
     const response = await api.get(`/products/name`, {
         params: { name }
