@@ -3,6 +3,9 @@ package Project.Controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,14 +29,14 @@ public class CommentController {
 	private final CommentService commentService;
 
 	@PostMapping("/comments")
-	public ResponseEntity<ApiResponse<Comment>> createComment(@Valid @RequestBody Comment inputComment) {
-		Comment comment = this.commentService.createComment(inputComment);
-		return ApiResponse.created(comment);
+	public ResponseEntity<ApiResponse<CommentResponseDTO>> createComment(@Valid @RequestBody Comment inputComment) {
+		CommentResponseDTO newComment = this.commentService.createComment(inputComment);
+		return ApiResponse.created(newComment);
 	}
 
-	@GetMapping("/comments")
-	public ResponseEntity<?> getComments() {
-		List<CommentResponseDTO> comments = this.commentService.fetchComments();
+	@GetMapping("/products/{productId}/comments")
+	public ResponseEntity<ApiResponse<List<CommentResponseDTO>>> getComments(@PathVariable Integer productId) {
+		List<CommentResponseDTO> comments = this.commentService.fetchComments(productId);
 		return ApiResponse.success(comments);
 	}
 
@@ -43,7 +46,7 @@ public class CommentController {
 		return ApiResponse.success(comment);
 	}
 
-	@PutMapping("/comments/{id}")
+	@PutMapping("/products/{productId}/comments/{id}")
 	public ResponseEntity<ApiResponse<CommentResponseDTO>> updateCommentById(@PathVariable int id,
 			@Valid @RequestBody Comment inputComment) {
 		CommentResponseDTO comment = this.commentService.updateCommentById(id, inputComment);

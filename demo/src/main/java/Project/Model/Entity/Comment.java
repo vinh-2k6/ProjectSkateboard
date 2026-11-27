@@ -9,6 +9,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -23,6 +25,18 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Comment {
+    @PrePersist
+    public void handleBeforeCreate() {
+        Instant now = Instant.now();
+
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    public void handleBeforeUpdate() {
+        this.updatedAt = Instant.now();
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,7 +55,7 @@ public class Comment {
     @NotBlank(message = "content không được để trống")
     private String content;
 
-    private boolean isApproved;
+    private Boolean isApproved;
 
     private Instant createdAt;
 

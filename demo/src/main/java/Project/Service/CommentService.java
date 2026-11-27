@@ -1,6 +1,7 @@
 package Project.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -28,25 +29,27 @@ public class CommentService {
         dto.setProductId(comment.getProduct().getId());
         dto.setCreatedAt(comment.getCreatedAt());
         dto.setUpdatedAt(comment.getUpdatedAt());
-        dto.setApproved(comment.isApproved());
+        dto.setApproved(comment.getIsApproved());
 
         return dto;
     }
 
     // Create comment
-    public Comment createComment(Comment comment) {
-		comment.setApproved(true);
-		return this.commentRepository.save(comment);
+    public CommentResponseDTO createComment(Comment comment) {
+		comment.setIsApproved(true);
+		return convertCommentToDTO(this.commentRepository.save(comment));
 	}
 
     // Get all comments
-    public List<CommentResponseDTO> fetchComments() {
-
-        List<Comment> comments = this.commentRepository.findAll();
-
-        return comments.stream()
-                .map(this::convertCommentToDTO)
-                .toList();
+    public List<CommentResponseDTO> fetchComments(Integer productId) {
+        List<CommentResponseDTO> commentResponseDTOs = this.commentRepository
+                                .searchCommentOfProduct(productId)
+                                .stream()
+                                .map(comment -> {
+                                    return convertCommentToDTO(comment);
+                                })
+                                .collect(Collectors.toList());
+        return commentResponseDTOs;
     }
 
     // Get comment by ID
@@ -69,7 +72,7 @@ public class CommentService {
                         new ResourceNotFoundException("Comment not found"));
 
         comment.setContent(inputComment.getContent());
-        comment.setApproved(inputComment.isApproved());
+        comment.setIsApproved(inputComment.getIsApproved());
 
         Comment updatedComment = this.commentRepository.save(comment);
 
