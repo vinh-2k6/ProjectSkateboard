@@ -1,6 +1,6 @@
 # 🛹 AI FASHION & SKATE PLATFORM
 > **AI-powered Fashion & Footwear Shopping Assistant**  
-> Nền tảng thương mại điện tử chuyên biệt cho giày, trang phục và ván trượt đường phố, tích hợp Trợ lý Trí tuệ Nhân tạo (Gemini AI) tư vấn phối đồ và đối sánh giá sản phẩm đa sàn.
+> Nền tảng thương mại điện tử chuyên biệt cho giày, trang phục, tích hợp Trợ lý Trí tuệ Nhân tạo (Gemini AI) tư vấn phối đồ và đối sánh giá sản phẩm đa sàn.
 
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![React](https://img.shields.io/badge/React-18.x-blue.svg)](https://reactjs.org/)
