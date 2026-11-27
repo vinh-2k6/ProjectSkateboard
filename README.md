@@ -13,7 +13,7 @@
 ---
 
 ## 📌 1. Giới Thiệu Dự Án (Project Overview)
-Người mua sắm các sản phẩm giày và thời trang skate thường gặp khó khăn trong việc chọn kích thước (size giày, ván trượt), không biết cách phối trang phục phù hợp với vóc dáng, và mất nhiều thời gian kiểm tra giá giữa các sàn TMĐT (Shopee, Tiki, Lazada).
+Người mua sắm các sản phẩm giày thường gặp khó khăn trong việc chọn kích thước (size giày), không biết cách phối trang phục phù hợp với vóc dáng, và mất nhiều thời gian kiểm tra giá giữa các sàn TMĐT (Shopee, Tiki, Lazada).
 
 **AI Fashion Platform** giải quyết triệt để các vấn đề trên thông qua:
 1. Trải nghiệm mua sắm mượt mà, hỗ trợ đăng nhập nhanh bằng Google.
