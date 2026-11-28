@@ -68,6 +68,10 @@ public class SecurityConfig {
                         "/api/v1/auth/google",
                         "/api/v1/products",
                         "/api/v1/products/{id}",
+                        "/api/v1/products/{productId}/comments",
+                        "/api/v1/products/**",
+                        "/api/v1/comments",
+                        "/api/v1/comments/**",
                         "/ws/**"
                 ).permitAll()
                 .anyRequest().authenticated()

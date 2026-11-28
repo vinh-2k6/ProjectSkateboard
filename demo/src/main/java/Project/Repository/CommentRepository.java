@@ -15,6 +15,7 @@ public interface CommentRepository extends JpaRepository<Comment, Integer> {
     @Query("""
         SELECT c
         FROM Comment c
+        LEFT JOIN FETCH c.user u
         INNER JOIN c.product p
         WHERE p.id = :productID
         ORDER BY c.createdAt DESC

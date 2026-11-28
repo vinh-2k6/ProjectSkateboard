@@ -25,4 +25,8 @@ public class CommentResponseDTO {
 	private int userId;
 
 	private int productId;
+
+	private Double rating;
+
+	private String userName;
 }

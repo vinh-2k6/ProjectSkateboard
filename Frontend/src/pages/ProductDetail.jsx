@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { cartService } from '../services/cartService';
+import ProductReviews from '../components/ProductReviews';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -281,6 +282,9 @@ export default function ProductDetail() {
           </div>
         </div>
       </div>
+
+      {/* Khu vực Đánh giá và Bình luận sản phẩm */}
+      <ProductReviews productId={product.id || id} />
     </div>
   );
 }

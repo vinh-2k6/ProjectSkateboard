@@ -7,8 +7,12 @@ import org.springframework.stereotype.Service;
 
 import Project.Exception.ResourceNotFoundException;
 import Project.Model.Entity.Comment;
+import Project.Model.Entity.Product;
+import Project.Model.Entity.User;
 import Project.Model.DTO.Response.CommentResponseDTO;
 import Project.Repository.CommentRepository;
+import Project.Repository.ProductRepository;
+import Project.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -16,7 +20,8 @@ import lombok.RequiredArgsConstructor;
 public class CommentService {
 
     private final CommentRepository commentRepository;
-
+    private final UserRepository userRepository;
+    private final ProductRepository productRepository;
 
     // Convert Comment -> CommentResponseDTO
     public CommentResponseDTO convertCommentToDTO(Comment comment) {
@@ -25,20 +30,37 @@ public class CommentService {
 
         dto.setId(comment.getId());
         dto.setContent(comment.getContent());
-        dto.setUserId(comment.getUser().getId());
-        dto.setProductId(comment.getProduct().getId());
+        if (comment.getUser() != null) {
+            dto.setUserId(comment.getUser().getId());
+            dto.setUserName(comment.getUser().getName());
+        }
+        if (comment.getProduct() != null) {
+            dto.setProductId(comment.getProduct().getId());
+        }
+        dto.setRating(comment.getRating() != null ? comment.getRating() : 5.0);
         dto.setCreatedAt(comment.getCreatedAt());
         dto.setUpdatedAt(comment.getUpdatedAt());
-        dto.setApproved(comment.getIsApproved());
+        dto.setApproved(comment.getIsApproved() != null ? comment.getIsApproved() : true);
 
         return dto;
     }
 
     // Create comment
     public CommentResponseDTO createComment(Comment comment) {
-		comment.setIsApproved(true);
-		return convertCommentToDTO(this.commentRepository.save(comment));
-	}
+        if (comment.getUser() != null && comment.getUser().getId() != 0) {
+            User user = this.userRepository.findById(comment.getUser().getId()).orElse(null);
+            comment.setUser(user);
+        }
+        if (comment.getProduct() != null && comment.getProduct().getId() != null) {
+            Product product = this.productRepository.findById(comment.getProduct().getId()).orElse(null);
+            comment.setProduct(product);
+        }
+        if (comment.getRating() == null) {
+            comment.setRating(5.0);
+        }
+        comment.setIsApproved(true);
+        return convertCommentToDTO(this.commentRepository.save(comment));
+    }
 
     // Get all comments
     public List<CommentResponseDTO> fetchComments(Integer productId) {
