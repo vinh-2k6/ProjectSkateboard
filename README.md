@@ -1,6 +1,6 @@
 # 🛹 AI FASHION & SKATE PLATFORM
 > **AI-powered Fashion & Footwear Shopping Assistant**  
-> Nền tảng thương mại điện tử chuyên biệt cho giày, trang phục và ván trượt đường phố, tích hợp Trợ lý Trí tuệ Nhân tạo (Gemini AI) tư vấn phối đồ và đối sánh giá sản phẩm đa sàn.
+> Nền tảng thương mại điện tử chuyên biệt cho giày, trang phục, tích hợp Trợ lý Trí tuệ Nhân tạo (Gemini AI) tư vấn phối đồ và đối sánh giá sản phẩm đa sàn.
 
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![React](https://img.shields.io/badge/React-18.x-blue.svg)](https://reactjs.org/)
@@ -13,7 +13,7 @@
 ---
 
 ## 📌 1. Giới Thiệu Dự Án (Project Overview)
-Người mua sắm các sản phẩm giày và thời trang skate thường gặp khó khăn trong việc chọn kích thước (size giày, ván trượt), không biết cách phối trang phục phù hợp với vóc dáng, và mất nhiều thời gian kiểm tra giá giữa các sàn TMĐT (Shopee, Tiki, Lazada).
+Người mua sắm các sản phẩm giày thường gặp khó khăn trong việc chọn kích thước (size giày), không biết cách phối trang phục phù hợp với vóc dáng, và mất nhiều thời gian kiểm tra giá giữa các sàn TMĐT (Shopee, Tiki, Lazada).
 
 **AI Fashion Platform** giải quyết triệt để các vấn đề trên thông qua:
 1. Trải nghiệm mua sắm mượt mà, hỗ trợ đăng nhập nhanh bằng Google.
