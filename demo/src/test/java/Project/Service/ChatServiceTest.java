@@ -1,9 +1,12 @@
 
 package Project.Service;
 
+import Project.Model.DTO.Request.ChatRequestDTO;
 import Project.Model.DTO.Request.ProductSearchDTO;
 import Project.Model.DTO.Response.ChatResponseDTO;
+import Project.Model.DTO.Response.MarketComparisonResponseDTO;
 import Project.Model.DTO.Response.ProductResponseDTO;
+import Project.Model.Enum.MessageType;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +37,12 @@ class ChatServiceTest {
 
     @Mock
     private BrandService brandService;
+
+    @Mock
+    private OutfitStylistService outfitStylistService;
+
+    @Mock
+    private MarketComparisonService marketComparisonService;
 
     @InjectMocks
     private ChatService chatService;
@@ -279,5 +288,36 @@ class ChatServiceTest {
                 .contains("Nike Air Max")
                 .contains("1500000")
                 .contains(message);
+    }
+
+    @Test
+    void chat_shouldReturnMarketplaceComparison() {
+        ProductResponseDTO product = new ProductResponseDTO();
+        product.setId(5);
+        product.setName("Nike Dunk Low");
+
+        MarketComparisonResponseDTO comparison = MarketComparisonResponseDTO.builder()
+                .resolved(true)
+                .summary("Giá shop đang cạnh tranh với Shopee và Tiki.")
+                .product(product)
+                .offers(List.of())
+                .build();
+
+        when(marketComparisonService.compare(5, "So sánh giá với Shopee"))
+                .thenReturn(comparison);
+
+        ChatRequestDTO request = new ChatRequestDTO();
+        request.setMessage("So sánh giá với Shopee");
+        request.setProductId(5);
+        request.setType("MARKETPLACE_COMPARISON");
+
+        ChatResponseDTO result = chatService.chat(request);
+
+        assertThat(result.getType()).isEqualTo(MessageType.MARKETPLACE_COMPARISON);
+        assertThat(result.getMessage()).contains("cạnh tranh");
+        assertThat(result.getData()).isSameAs(comparison);
+        assertThat(result.getProducts()).containsExactly(product);
+        verify(geminiService, never()).extractProductSearch(any(), any(), any());
+        verify(outfitStylistService, never()).generateOutfit(any(), any(), any(), any());
     }
 }

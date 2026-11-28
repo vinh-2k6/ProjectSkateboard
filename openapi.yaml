@@ -2333,6 +2333,48 @@
         }
       }
     },
+    "/api/v1/products/{id}/market-comparison": {
+      "get": {
+        "tags": [
+          "product"
+        ],
+        "operationId": "getMarketComparison",
+        "summary": "So sánh giá sản phẩm với Shopee, Lazada, Tiki",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMarketComparisonResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/chat": {
       "post": {
         "tags": [
@@ -4795,9 +4837,113 @@
               "$ref": "#/components/schemas/ProductResponseDTO"
             }
           },
-          "data": {},
+          "data": {
+            "description": "OUTFIT_RECOMMENDATION dùng outfit. MARKETPLACE_COMPARISON dùng MarketComparisonResponseDTO."
+          },
           "reply": {
             "type": "string"
+          }
+        }
+      },
+      "MarketplaceOfferDTO": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string"
+          },
+          "platformLabel": {
+            "type": "string"
+          },
+          "price": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "priceMin": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "priceMax": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rating": {
+            "type": "number",
+            "format": "double"
+          },
+          "soldCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "shopName": {
+            "type": "string"
+          },
+          "listingTitle": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "highlights": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "STORE",
+              "CATALOG",
+              "ESTIMATE",
+              "SEARCH"
+            ]
+          },
+          "ours": {
+            "type": "boolean"
+          }
+        }
+      },
+      "MarketComparisonResponseDTO": {
+        "type": "object",
+        "properties": {
+          "resolved": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "verdict": {
+            "type": "string"
+          },
+          "disclaimer": {
+            "type": "string"
+          },
+          "product": {
+            "$ref": "#/components/schemas/ProductResponseDTO"
+          },
+          "offers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MarketplaceOfferDTO"
+            }
+          }
+        }
+      },
+      "ApiResponseMarketComparisonResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/MarketComparisonResponseDTO"
+          },
+          "errorCode": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

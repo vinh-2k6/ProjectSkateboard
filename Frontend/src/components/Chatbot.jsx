@@ -2,14 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { sendChatMessage } from '../services/chatService';
 import OutfitRecommendationCard from './OutfitStylist/OutfitRecommendationCard';
+import MarketComparisonCard from './MarketComparisonCard';
 
 const Chatbot = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
-        { sender: 'bot', text: 'Xin chào! Mình là tư vấn viên AI của ProjectSkateBoard. Bạn cần tìm hiểu mẫu giày nào hay muốn mình tư vấn phối đồ (outfit) không?' }
+        { sender: 'bot', text: 'Xin chào! Mình là tư vấn viên AI của ProjectSkateBoard. Bạn có thể hỏi mẫu giày, cách phối đồ, hoặc nhờ mình so sánh giá shop với Shopee, Lazada, Tiki và TikTok Shop.' }
     ]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
+    const [pendingType, setPendingType] = useState(null);
     const chatEndRef = useRef(null);
 
     const location = useLocation();
@@ -29,6 +31,8 @@ const Chatbot = () => {
 
         if (!customText) setInput('');
         setMessages((prev) => [...prev, { sender: 'user', text: userText }]);
+        const looksLikeCompare = /so sánh|so sanh|shopee|lazada|tiki/i.test(userText);
+        setPendingType(options.type || (looksLikeCompare ? 'MARKETPLACE_COMPARISON' : null));
         setLoading(true);
 
         try {
@@ -50,6 +54,7 @@ const Chatbot = () => {
                 { sender: 'bot', text: 'Rất tiếc, đã có lỗi xảy ra khi kết nối. Vui lòng thử lại sau!' }
             ]);
         } finally {
+            setPendingType(null);
             setLoading(false);
         }
     };
@@ -58,14 +63,14 @@ const Chatbot = () => {
         <div className="fixed bottom-6 right-6 z-50">
             {/* Cửa sổ Chat */}
             {isOpen && (
-                <div className="w-80 sm:w-96 h-[530px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col mb-4 overflow-hidden animate-in fade-in slide-in-from-bottom-5">
+                <div className="w-80 sm:w-[28rem] h-[560px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col mb-4 overflow-hidden animate-in fade-in slide-in-from-bottom-5">
                     {/* Header */}
                     <div className="bg-black text-white p-4 flex justify-between items-center shadow-sm">
                         <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse"></span>
                             <div>
                                 <h3 className="font-bold text-sm tracking-wide">ProjectSkateBoard AI</h3>
-                                <p className="text-[10px] text-gray-300">Tư vấn chi tiết & Phối đồ Stylist</p>
+                                <p className="text-[10px] text-gray-300">Tư vấn, phối đồ & so sánh sàn</p>
                             </div>
                         </div>
                         <button 
@@ -80,7 +85,7 @@ const Chatbot = () => {
                     {currentProductId && (
                         <div className="bg-amber-50 border-b border-amber-200 px-3 py-2 text-xs text-amber-800 flex items-center justify-between">
                             <span>🎯 Đang xem sản phẩm #{currentProductId}</span>
-                            <span className="text-[10px] bg-amber-200 px-1.5 py-0.5 rounded font-medium">Tư vấn & Phối đồ</span>
+                            <span className="text-[10px] bg-amber-200 px-1.5 py-0.5 rounded font-medium">Tư vấn · Phối đồ · So sánh sàn</span>
                         </div>
                     )}
 
@@ -101,6 +106,10 @@ const Chatbot = () => {
                                     <div className="w-full mt-1">
                                         <OutfitRecommendationCard outfit={msg.data} />
                                     </div>
+                                )}
+
+                                {msg.type === 'MARKETPLACE_COMPARISON' && msg.data && (
+                                    <MarketComparisonCard comparison={msg.data} />
                                 )}
 
                                 {/* Render danh sách sản phẩm gợi ý thông thường nếu có */}
@@ -134,7 +143,13 @@ const Chatbot = () => {
                         {loading && (
                             <div className="flex items-center gap-2 text-gray-500 text-xs italic bg-white p-2.5 rounded-xl border border-gray-100 max-w-[75%]">
                                 <span className="inline-block w-2 h-2 bg-indigo-500 rounded-full animate-bounce"></span>
-                                <span>AI Stylist đang lên set đồ...</span>
+                                <span>
+                                    {pendingType === 'MARKETPLACE_COMPARISON'
+                                        ? 'Đang đối chiếu Shopee, Lazada, Tiki...'
+                                        : pendingType === 'OUTFIT_RECOMMENDATION'
+                                            ? 'AI Stylist đang lên set đồ...'
+                                            : 'Đang soạn câu trả lời...'}
+                                </span>
                             </div>
                         )}
                         <div ref={chatEndRef} />
@@ -156,6 +171,12 @@ const Chatbot = () => {
                                         className="whitespace-nowrap px-2.5 py-1 bg-white border border-gray-300 rounded-full hover:bg-gray-50 text-gray-700"
                                     >
                                         🎒 Set đồ đi học/dạo phố
+                                    </button>
+                                    <button
+                                        onClick={() => handleSend(null, "So sánh giá sản phẩm này với Shopee, Lazada, Tiki", { type: 'MARKETPLACE_COMPARISON' })}
+                                        className="whitespace-nowrap px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-800 font-medium rounded-full hover:bg-amber-100"
+                                    >
+                                        ⚖️ So sánh sàn
                                     </button>
                                     <button
                                         onClick={() => handleSend(null, "Sản phẩm này có những ưu điểm nổi bật gì?")}
@@ -184,6 +205,12 @@ const Chatbot = () => {
                                     >
                                         🏀 Giày bóng rổ Nike
                                     </button>
+                                    <button
+                                        onClick={() => handleSend(null, "So sánh giá với Shopee, Lazada, Tiki", { type: 'MARKETPLACE_COMPARISON' })}
+                                        className="whitespace-nowrap px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-800 font-medium rounded-full hover:bg-amber-100"
+                                    >
+                                        ⚖️ So sánh giá sàn
+                                    </button>
                                 </>
                             )}
                         </div>
@@ -193,7 +220,7 @@ const Chatbot = () => {
                     <form onSubmit={handleSend} className="p-3 bg-white border-t border-gray-200 flex gap-2">
                         <input
                             type="text"
-                            placeholder={currentProductId ? "Hỏi chi tiết hoặc cách phối đồ..." : "Hỏi tìm giày, cách phối đồ..."}
+                            placeholder={currentProductId ? "Hỏi chi tiết, phối đồ hoặc so sánh sàn..." : "Hỏi tìm giày, phối đồ, so sánh sàn..."}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             className="flex-1 px-3 py-2 border rounded-xl text-sm focus:outline-none focus:border-black"

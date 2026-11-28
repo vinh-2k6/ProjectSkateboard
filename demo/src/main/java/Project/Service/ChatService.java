@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import Project.Model.DTO.Request.ChatRequestDTO;
 import Project.Model.DTO.Request.ProductSearchDTO;
 import Project.Model.DTO.Response.ChatResponseDTO;
+import Project.Model.DTO.Response.MarketComparisonResponseDTO;
 import Project.Model.DTO.Response.OutfitResponseDTO;
 import Project.Model.DTO.Response.ProductResponseDTO;
 import Project.Model.Enum.MessageType;
@@ -23,6 +24,7 @@ public class ChatService {
     private final CategoryService categoryService;
     private final BrandService brandService;
     private final OutfitStylistService outfitStylistService;
+    private final MarketComparisonService marketComparisonService;
 
     public ChatResponseDTO chat(String message) {
         return chat(new ChatRequestDTO(message, null));
@@ -32,7 +34,12 @@ public class ChatService {
         String message = request.getMessage() != null ? request.getMessage().trim() : "";
         Integer productId = request.getProductId();
 
-        // 1. Nhận diện ý định phối đồ (AI Outfit Stylist)
+        // 1. So sánh giá shop với Shopee, Lazada, Tiki
+        if ("MARKETPLACE_COMPARISON".equalsIgnoreCase(request.getType()) || isMarketComparisonIntent(message)) {
+            return compareMarketplaces(productId, message);
+        }
+
+        // 2. Nhận diện ý định phối đồ (AI Outfit Stylist)
         if ("OUTFIT_RECOMMENDATION".equalsIgnoreCase(request.getType()) || isOutfitIntent(message)) {
             OutfitResponseDTO outfit = outfitStylistService.generateOutfit(
                     productId,
@@ -48,13 +55,54 @@ public class ChatService {
                     .build();
         }
 
-        // 2. Nếu khách hàng đang xem hoặc hỏi về một sản phẩm cụ thể (có productId)
+        // 3. Nếu khách hàng đang xem hoặc hỏi về một sản phẩm cụ thể (có productId)
         if (productId != null) {
             return consultProductDetail(productId, message);
         }
 
-        // 3. Luồng chung khi không có productId: Phân tích tìm kiếm hoặc chat thông thường
+        // 4. Luồng chung khi không có productId: Phân tích tìm kiếm hoặc chat thông thường
         return handleGeneralChat(message);
+    }
+
+    private ChatResponseDTO compareMarketplaces(Integer productId, String message) {
+        try {
+            MarketComparisonResponseDTO comparison = marketComparisonService.compare(productId, message);
+            if (!comparison.isResolved()) {
+                return new ChatResponseDTO(MessageType.TEXT, comparison.getSummary(), List.of());
+            }
+            return ChatResponseDTO.builder()
+                    .type(MessageType.MARKETPLACE_COMPARISON)
+                    .message(comparison.getSummary())
+                    .data(comparison)
+                    .products(comparison.getProduct() != null ? List.of(comparison.getProduct()) : List.of())
+                    .build();
+        } catch (Exception e) {
+            log.error("Lỗi khi so sánh giá đa sàn: {}", e.getMessage());
+            return new ChatResponseDTO(
+                    MessageType.TEXT,
+                    "Mình chưa đối chiếu được giá với các sàn lúc này. Bạn thử lại sau, hoặc mở trang sản phẩm rồi bấm So sánh sàn nhé.",
+                    List.of()
+            );
+        }
+    }
+
+    private boolean isMarketComparisonIntent(String message) {
+        if (message == null || message.isBlank()) {
+            return false;
+        }
+        String lower = message.toLowerCase();
+        return lower.contains("so sánh")
+                || lower.contains("so sanh")
+                || lower.contains("đối chiếu")
+                || lower.contains("doi chieu")
+                || lower.contains("shopee")
+                || lower.contains("lazada")
+                || lower.contains("tiki")
+                || lower.contains("tiktok")
+                || lower.contains("tik tok")
+                || lower.contains("sàn khác")
+                || lower.contains("giá thị trường")
+                || lower.contains("gia thi truong");
     }
 
     /**

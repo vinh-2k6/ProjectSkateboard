@@ -23,9 +23,11 @@ import Project.Helper.ApiResponse;
 import Project.Helper.PageResponse;
 import Project.Model.Entity.Role;
 import Project.Model.DTO.Request.ProductRequestDTO;
+import Project.Model.DTO.Response.MarketComparisonResponseDTO;
 import Project.Model.DTO.Response.ProductResponseDTO;
 import Project.Model.DTO.Response.RoleResponseDTO;
 import Project.Model.DTO.ProductWebSocketEvent;
+import Project.Service.MarketComparisonService;
 import Project.Service.ProductService;
 import Project.Service.RoleService;
 import jakarta.validation.Valid;
@@ -37,6 +39,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProductController {
     private final ProductService productService;
+    private final MarketComparisonService marketComparisonService;
     private final SimpMessagingTemplate messagingTemplate;
 
     @PostMapping("/products")
@@ -91,6 +94,16 @@ public class ProductController {
         return ApiResponse.success(PageResponse.from(productResponseDTOs));
     }
 
+
+    @GetMapping("/products/{id}/market-comparison")
+    public ResponseEntity<ApiResponse<MarketComparisonResponseDTO>> getMarketComparison(@PathVariable int id) {
+        return ApiResponse.success(
+                marketComparisonService.compare(
+                        id,
+                        "So sánh giá với Shopee, Lazada, Tiki"
+                )
+        );
+    }
 
     @GetMapping("/products/{id}")
     public ResponseEntity<ApiResponse<ProductResponseDTO>> getProduct(@PathVariable int id) {
